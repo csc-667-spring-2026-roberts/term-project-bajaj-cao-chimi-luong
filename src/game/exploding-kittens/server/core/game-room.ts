@@ -6,7 +6,7 @@ export type GameRoomID = number;
 
 export type GameStatus = "LOBBY" | "FINISHED" | "ACTIVE";
 
-export type TurnState =
+export type ResponseNeeded =
   // Regular game flow
   | { kind: "NONE" }
 
@@ -23,11 +23,13 @@ export interface GameRoom {
   id: GameRoomID; //  The Join Code to invite friends
   players: Player[]; //  List of players in Game Room
   freshDeck: Card[];
+  deck?: Card[];
   countdown: Countdown;
   //ACTIVE GAME
   previousTurnPlayerID?: PlayerID;
-  currentTurnPlayerID?: PlayerID;
-  currentTurnState?: TurnState;
+  currentTurnPlayerIndex?: PlayerID;
+  turnsRemaining?: number;
+  responseNeeded?: ResponseNeeded;
 
   //INACTIVE
   winningPlayer?: PlayerID;

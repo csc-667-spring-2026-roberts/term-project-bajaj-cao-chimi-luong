@@ -1,6 +1,7 @@
 import { GameRoom } from "./core/game-room.js";
-import { initGameRoom } from "./core/init.js";
+import { initGameRoom } from "./core/init-game-room.js";
 import { addPlayerToGameRoom } from "./core/addPlayerToGameRoom.js";
+import { startGame } from "./core/play-game.js";
 
 /*
 This file is to test the exploding kittens core
@@ -31,3 +32,6 @@ if (gameRoom1.countdown.kind === "RUNNING") {
 }
 
 //game started
+gameRoom1 = startGame(gameRoom1);
+console.log(gameRoom1);
+//First player in players begins

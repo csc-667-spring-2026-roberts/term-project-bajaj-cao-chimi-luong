@@ -7,6 +7,6 @@ export type PlayerAvatarName = string;
 export interface Player {
   id: PlayerID;
   avatarName: PlayerAvatarName;
-  hand?: Card[];
+  hand: Card[];
   alive?: boolean;
 }

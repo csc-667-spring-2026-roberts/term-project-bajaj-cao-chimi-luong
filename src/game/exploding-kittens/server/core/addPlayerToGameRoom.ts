@@ -16,6 +16,7 @@ export function addPlayerToGameRoom(
     throw new Error("Cannot join, gameroom is full");
   }
   const newPlayer: Player = {
+    hand: [],
     avatarName: playerAvatarName,
     id: playerIDCounter++,
   };
