@@ -1,11 +1,5 @@
-import { Card, GameRoom, GameRoomID, Player, PlayerAvatarName, PlayerID } from "./types.js";
-import { MAX_PLAYERS_PER_ROOM, NEW_DECK_COUNT } from "./game-config.js";
-
-let playerid = 0;
-
-export function getNewPlayerId(): PlayerID {
-  return playerid++;
-}
+import { Card, GameRoom, GameRoomID, Player } from "./types.js";
+import { NEW_DECK_COUNT } from "./game-config.js";
 
 function buildNewDeck(): Card[] {
   const deck: Card[] = [];
@@ -20,33 +14,14 @@ function buildNewDeck(): Card[] {
   return deck;
 }
 
-export function initGameRoom(gameRoomID: GameRoomID, hostPlayerAvatar: PlayerAvatarName): GameRoom {
+export function initGameRoom(gameRoomID: GameRoomID): GameRoom {
   const players: Player[] = [];
-  players.push({
-    avatarName: hostPlayerAvatar,
-    id: getNewPlayerId(),
-  });
 
   return {
+    countdown: { kind: "PAUSED" },
     freshDeck: buildNewDeck(),
     status: "LOBBY",
     id: gameRoomID,
     players: players,
-    playerCount: players.length,
   };
-}
-
-export function addPlayerToRoom(
-  gameRoom: GameRoom,
-  joiningPlayerAvatar: PlayerAvatarName,
-): boolean {
-  if (gameRoom.players.length < MAX_PLAYERS_PER_ROOM) {
-    gameRoom.players.push({
-      avatarName: joiningPlayerAvatar,
-      id: getNewPlayerId(),
-    });
-    gameRoom.playerCount = gameRoom.players.length;
-    return true;
-  }
-  return false;
 }

@@ -42,14 +42,15 @@ export type TurnState =
   | { kind: "REINSERT_EXPLODING_KITTEN"; playerID: PlayerID; deckSize: number }
   | { kind: "FAVOR"; askingPlayerID: PlayerID; givingPlayerID: PlayerID }
   | { kind: "CHOOSE A FAVOR"; stealingPlayerID: PlayerID; victimPlayerID: PlayerID };
+export type Countdown = { kind: "PAUSED" } | { kind: "RUNNING"; endsAtMs: number };
 
 export interface GameRoom {
   status: GameStatus; //  Lobby, Active, Finished
   //Lobby
   id: GameRoomID; //  The Join Code to invite friends
   players: Player[]; //  List of players in Game Room
-  playerCount: number; //  Number of Players
   freshDeck: Card[];
+  countdown: Countdown;
   //ACTIVE GAME
   previousTurnPlayerID?: PlayerID;
   currentTurnPlayerID?: PlayerID;
