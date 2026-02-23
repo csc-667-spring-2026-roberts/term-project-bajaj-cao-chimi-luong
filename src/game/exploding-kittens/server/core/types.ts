@@ -18,17 +18,18 @@ export interface Card {
 }
 
 /* Player Types/Interfaces */
-export type PlayerID = string;
+export type PlayerID = number;
+export type PlayerAvatarName = string;
 
 export interface Player {
-  id: string;
-  avatarName: string;
-  hand: Card[];
-  alive: boolean;
+  id: PlayerID;
+  avatarName: PlayerAvatarName;
+  hand?: Card[];
+  alive?: boolean;
 }
 
 /* Game State Types/Interfaces */
-export type GameRoomID = string;
+export type GameRoomID = number;
 
 export type GameStatus = "LOBBY" | "FINISHED" | "ACTIVE";
 
@@ -48,10 +49,11 @@ export interface GameRoom {
   id: GameRoomID; //  The Join Code to invite friends
   players: Player[]; //  List of players in Game Room
   playerCount: number; //  Number of Players
-
+  freshDeck: Card[];
   //ACTIVE GAME
-  currentTurnPlayerID: PlayerID;
-  currentTurnState: TurnState;
+  previousTurnPlayerID?: PlayerID;
+  currentTurnPlayerID?: PlayerID;
+  currentTurnState?: TurnState;
 
   //INACTIVE
   winningPlayer?: PlayerID;
