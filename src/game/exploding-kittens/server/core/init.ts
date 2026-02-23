@@ -1,5 +1,7 @@
-import { Card, GameRoom, GameRoomID, Player } from "./types.js";
 import { NEW_DECK_COUNT } from "./game-config.js";
+import { Card } from "./cards.js";
+import { GameRoom, GameRoomID } from "./game-room.js";
+import { Player } from "./player.js";
 
 function buildNewDeck(): Card[] {
   const deck: Card[] = [];

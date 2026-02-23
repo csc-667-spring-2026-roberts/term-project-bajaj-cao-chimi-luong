@@ -1,6 +1,6 @@
-import { CardType } from "./types.js";
-
 //A fresh deck before dealing and inserting
+import { CardType } from "./cards.js";
+
 export const NEW_DECK_COUNT: Record<CardType, number> = {
   DEFUSE: 0,
   EXPLODING_KITTEN: 0,

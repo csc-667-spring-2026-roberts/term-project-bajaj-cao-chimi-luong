@@ -1,4 +1,4 @@
-import { GameRoom } from "./core/types.js";
+import { GameRoom } from "./core/game-room.js";
 import { initGameRoom } from "./core/init.js";
 import { addPlayerToGameRoom } from "./core/addPlayerToGameRoom.js";
 

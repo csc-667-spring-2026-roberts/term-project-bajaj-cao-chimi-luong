@@ -1,5 +1,6 @@
-import { Countdown, GameRoom, Player, PlayerAvatarName } from "./types.js";
 import { MAX_PLAYERS_PER_ROOM, MIN_PLAYERS, TIMEOUT_PLAYER_JOIN_MS } from "./game-config.js";
+import { Player, PlayerAvatarName } from "./player.js";
+import { Countdown, GameRoom } from "./game-room.js";
 
 export let playerIDCounter = 0;
 

@@ -1,34 +1,7 @@
-/* Card Types/Interfaces */
-export type CardId = string;
-
-export type CardType =
-  | "EXPLODING_KITTEN"
-  | "DEFUSE"
-  | "NOPE"
-  | "ATTACK"
-  | "SKIP"
-  | "SHUFFLE"
-  | "SEE_THE_FUTURE"
-  | "FAVOR"
-  | "DRAW_FROM_BOTTOM";
-
-export interface Card {
-  id: CardId;
-  type: CardType;
-}
-
-/* Player Types/Interfaces */
-export type PlayerID = number;
-export type PlayerAvatarName = string;
-
-export interface Player {
-  id: PlayerID;
-  avatarName: PlayerAvatarName;
-  hand?: Card[];
-  alive?: boolean;
-}
-
 /* Game State Types/Interfaces */
+import { Player, PlayerID } from "./player.js";
+import { Card, CardId } from "./cards.js";
+
 export type GameRoomID = number;
 
 export type GameStatus = "LOBBY" | "FINISHED" | "ACTIVE";
