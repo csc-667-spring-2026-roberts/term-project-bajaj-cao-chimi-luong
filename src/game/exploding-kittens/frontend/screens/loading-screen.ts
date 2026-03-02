@@ -32,7 +32,6 @@ export class LoadingScreen {
     setTimeout(() => {
       this.loadPlayButton();
     }, catDelay);
-    // setTimeout(() => { this.triggerWipe(); }, wipeDelay + 1600);
   }
 
   private renderLetters(delay: number): void {

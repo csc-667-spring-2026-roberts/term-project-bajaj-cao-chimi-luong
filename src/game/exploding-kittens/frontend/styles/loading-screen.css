@@ -5,7 +5,11 @@
 }
 
 body {
-    background: black;
+    background:
+            radial-gradient(ellipse at 50% 40%, #2a0800 0%, transparent 60%),
+            radial-gradient(ellipse at 30% 80%, #1a0500 0%, transparent 50%),
+            radial-gradient(ellipse at 70% 80%, #1a0500 0%, transparent 50%),
+            #000000;
     display: flex;
     align-items: start;
     justify-content: center;
