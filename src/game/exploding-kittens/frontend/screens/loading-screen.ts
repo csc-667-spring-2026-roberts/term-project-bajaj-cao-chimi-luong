@@ -28,7 +28,7 @@ export class LoadingScreen {
       this.renderCat();
     }, welcomeFinishDelay);
 
-    const catDelay = welcomeFinishDelay + this.titleText.length * this.baseDelay + 5000;
+    const catDelay = welcomeFinishDelay + this.titleText.length * this.baseDelay + 6000;
     setTimeout(() => {
       this.loadPlayButton();
     }, catDelay);
