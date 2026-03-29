@@ -30,6 +30,7 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.0.0",
+    "@types/bcrypt": "^6.0.0",
     "@types/connect-pg-simple": "^7.0.3",
     "@types/express": "^5.0.6",
     "@types/express-session": "^1.18.2",
