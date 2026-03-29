@@ -1,0 +1,7 @@
+ REGISTER curl -X POST http://localhost:3000/auth/register -H "Content-Type:application/json" -d '{"email":"TESTU2SER@sfsu.edu","password":"passwo2rddd"}' -c cookies.txt -v
+
+ LOGIN CORRECT PW curl -X POST http://localhost:3000/auth/login -H "Content-Type:application/json" -d '{"email":"TESTUSER@sfsu.edu","password":"passworddd"}'
+
+ LOGIN WRONG PW curl -X POST http://localhost:3000/auth/login -H "Content-Type:application/json" -d '{"email":"TESTUSER@sfsu.edu","password":"45445t46665"}'
+
+LOGOUT curl -X POST http://localhost:3000/auth/logout -b cookies.txt -v
