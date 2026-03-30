@@ -1,4 +1,5 @@
 import { Router } from "express";
+import { requireAuth } from "../middleware/auth.js";
 import Users from "../db/users.js";
 import crypto from "crypto";
 import bcrypt from "bcrypt";
@@ -12,6 +13,16 @@ function gravatarUrl(email: string): string {
 
   return `https://www.gravatar.com/avatar/${hash}?d=identicon`;
 }
+
+router.get("/register", (request, response) => {
+  if (request.session.user) { response.redirect("/auth/lobby"); return; }
+  response.render("register", { error: null });
+});
+
+router.get("/login", (request, response) => {
+  if (request.session.user) { response.redirect("/auth/lobby"); return; }
+  response.render("login", { error: null });
+});
 
 router.post("/register", async (request: TypedRequestBody<UserLoginRequestBody>, response) => {
   const { email, password } = request.body;
@@ -89,6 +100,10 @@ router.post("/logout", (request, response) => {
     response.clearCookie("connect.sid");
     response.json({ message: "Logout successful" });
   });
+});
+
+router.get("/lobby", requireAuth, (request, response) => {
+  response.render("lobby", { user: request.session.user });
 });
 
 export default router;

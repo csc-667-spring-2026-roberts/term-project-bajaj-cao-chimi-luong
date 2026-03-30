@@ -3,7 +3,7 @@ import { DbUser, User } from "../types/types.js";
 
 const existing = async (email: string): Promise<boolean> => {
   try {
-    await db.none("SELECT id FROM users WHERE email= $1", [email]);
+    await db.oneOrNone("SELECT id FROM users WHERE email= $1", [email]);
     return false;
   } catch {
     return true;

@@ -16,10 +16,11 @@ const PORT = process.env.PORT ?? 3000;
 
 const PgSession = connectPgSimple(session);
 
-// --- Middleware ---
-app.use(express.json()); // parse JSON bodies
-app.use(express.urlencoded({ extended: true })); // parse form data
-app.use(express.static(path.join(__dirname, "../public"))); // serve static files
+app.set("view engine", "ejs");
+app.set("views", path.join(__dirname, "../views"));
+
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 app.use(
   session({
     store: new PgSession({ pgPromise: db }),
@@ -35,17 +36,18 @@ app.use(
   }),
 );
 app.use(logging);
+
 app.use("/", homeRoutes);
 app.use("/test", testRoutes);
 app.use("/auth", authRoutes);
 
-// This MUST be the last app.use() - after all routes
+app.use(express.static(path.join(__dirname, "../public")));
+
 app.use((err: Error, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
   console.error(err.stack);
   res.status(500).send("Something broke!");
 });
 
-// --- start ---
 app.listen(PORT, () => {
-  console.log(`Server running on http//localhost:${String(PORT)}`);
+  console.log(`Server running on http://localhost:${String(PORT)}`);
 });
