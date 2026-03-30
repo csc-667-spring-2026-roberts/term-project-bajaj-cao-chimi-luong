@@ -1,0 +1,44 @@
+<%
+  // Set title for layout
+  const title = "Register";
+%>
+<%- include('partials/layout', { title, body: `
+  <div class="card">
+    <h1>Create account</h1>
+    <p class="subtitle">Join us today — it's free.</p>
+
+    ${ locals.error ? `<div class="error-box">${ error }</div>` : '' }
+
+    <form method="POST" action="/auth/register">
+      <div class="form-group">
+        <label for="email">Email</label>
+        <input
+          type="email"
+          id="email"
+          name="email"
+          placeholder="you@example.com"
+          required
+          autocomplete="email"
+        />
+      </div>
+
+      <div class="form-group">
+        <label for="password">Password</label>
+        <input
+          type="password"
+          id="password"
+          name="password"
+          placeholder="At least 8 characters"
+          required
+          autocomplete="new-password"
+        />
+      </div>
+
+      <button class="btn" type="submit">Create account</button>
+    </form>
+
+    <div class="link-row">
+      Already have an account? <a href="/auth/login">Sign in</a>
+    </div>
+  </div>
+` }) %>
