@@ -1,13 +1,12 @@
 <%
-  // Set title for layout
   const title = "Register";
+  const errorHtml = locals.error ? `<div class="error-box">${error}</div>` : '';
 %>
 <%- include('partials/layout', { title, body: `
   <div class="card">
     <h1>Create account</h1>
     <p class="subtitle">Join us today — it's free.</p>
-
-    ${ locals.error ? `<div class="error-box">${ error }</div>` : '' }
+    ${errorHtml}
 
     <form method="POST" action="/auth/register">
       <div class="form-group">

@@ -15,12 +15,18 @@ function gravatarUrl(email: string): string {
 }
 
 router.get("/register", (request, response) => {
-  if (request.session.user) { response.redirect("/auth/lobby"); return; }
+  if (request.session.user) {
+    response.redirect("/auth/lobby");
+    return;
+  }
   response.render("register", { error: null });
 });
 
 router.get("/login", (request, response) => {
-  if (request.session.user) { response.redirect("/auth/lobby"); return; }
+  if (request.session.user) {
+    response.redirect("/auth/lobby");
+    return;
+  }
   response.render("login", { error: null });
 });
 
@@ -28,18 +34,18 @@ router.post("/register", async (request: TypedRequestBody<UserLoginRequestBody>,
   const { email, password } = request.body;
 
   if (!email || !password) {
-    response.status(400).json({ error: "Email and password required" });
+    response.render("register", { error: "Email and password required" });
     return;
   }
 
   if (password.length < 8) {
-    response.status(400).json({ error: "Password must be at least 8 characters" });
+    response.render("register", { error: "Password must be at least 8 characters" });
     return;
   }
 
   try {
     if (await Users.existing(email)) {
-      response.status(409).json({ error: "Email already registered" });
+      response.render("register", { error: "Email already registered" });
       return;
     }
 
@@ -50,12 +56,11 @@ router.post("/register", async (request: TypedRequestBody<UserLoginRequestBody>,
 
     request.session.user = user;
 
-    response.status(201).json({
-      ...user,
-    });
+    response.redirect("/auth/lobby");
   } catch (error) {
     console.error("Registration error: ", error);
-    response.status(500).json({ error: "Registration failed" });
+    const message = error instanceof Error ? error.message : "Registration failed";
+    response.render("register", { error: message });
   }
 });
 
@@ -63,7 +68,7 @@ router.post("/login", async (request: TypedRequestBody<UserLoginRequestBody>, re
   const { email, password } = request.body;
 
   if (!email || !password) {
-    response.status(400).json({ error: "Email and password required" });
+    response.render("login", { error: "Email and password required" });
     return;
   }
 
@@ -83,10 +88,10 @@ router.post("/login", async (request: TypedRequestBody<UserLoginRequestBody>, re
       created_at: dbUser.created_at,
     };
     request.session.user = user;
-    response.json(user);
+    response.redirect("/auth/lobby");
   } catch (error) {
     console.error("Login error: ", error);
-    response.status(500).json({ error: "Invalid email or password" });
+    response.render("login", { error: "Invalid email or password" });
   }
 });
 
@@ -94,11 +99,11 @@ router.post("/logout", (request, response) => {
   request.session.destroy((error) => {
     if (error) {
       console.error("Logout error: ", error);
-      response.status(500).json({ error: "Logout failed" });
+      response.render("lobby", { error: "Logout failed", user: request.session.user });
       return;
     }
     response.clearCookie("connect.sid");
-    response.json({ message: "Logout successful" });
+    response.redirect("/auth/login");
   });
 });
 
