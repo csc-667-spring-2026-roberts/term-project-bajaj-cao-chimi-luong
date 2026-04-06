@@ -111,4 +111,9 @@ router.get("/lobby", requireAuth, (request, response) => {
   response.render("lobby", { user: request.session.user });
 });
 
+router.get("/users", requireAuth, async (_request, response) => {
+  const users = await Users.getAll();
+  response.json(users);
+});
+
 export default router;
