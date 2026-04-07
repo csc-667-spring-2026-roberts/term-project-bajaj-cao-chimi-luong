@@ -1,33 +1,40 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <link rel="stylesheet" href="/css/style.css">
   <title>Lobby</title>
 </head>
-
 <body>
   <nav>
     <span class="logo">Exploding Kittens</span>
   </nav>
-  <main>
-    <div class="lobby-card">
-      <img class="avatar" src="<%= user.gravatar_url %>" alt="Avatar" />
+
+  <div class="lobby-wrapper">
+    <!-- Left: profile card -->
+    <div class="profile-card">
+      <img src="<%= user.gravatar_url %>" alt="Avatar" />
       <h1>Welcome back!</h1>
-      <p class="email">
-        <%= user.email %>
-      </p>
-      <p class="joined">Member since <%= new Date(user.created_at).toLocaleDateString('en-US', { year: 'numeric' ,
-          month: 'long' , day: 'numeric' }) %>
-      </p>
+      <p class="email"><%= user.email %></p>
+      <p class="joined">Member since <%= new Date(user.created_at).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) %></p>
       <hr class="divider" />
       <form method="POST" action="/auth/logout">
-        <button type="submit">Sign out</button>
+        <button type="submit" class="sign-out-btn">Sign out</button>
       </form>
     </div>
-  </main>
-</body>
 
+    <!-- Right: players card -->
+    <div class="players-card">
+      <h2>🃏 Players in Lobby</h2>
+      <button id="fetch-btn" class="refresh-btn">Refresh Players</button>
+      <ul id="user-list"></ul>
+      <template id="user-template">
+        <li class="user-email"></li>
+      </template>
+    </div>
+  </div>
+
+  <script defer src="/js/bundle.js"></script>
+</body>
 </html>
