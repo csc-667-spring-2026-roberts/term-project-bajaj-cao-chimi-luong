@@ -1,14 +1,9 @@
-<%
-  // Set title for layout
-  const title = "Register";
-%>
-<%- include('partials/layout', { title, body: `
+<% const title = "Register" %>
+<%- include('../layout', { title, body: `
   <div class="card">
     <h1>Create account</h1>
-    <p class="subtitle">Join us today — it's free.</p>
-
-    ${ locals.error ? `<div class="error-box">${ error }</div>` : '' }
-
+    <p class="subtitle">Join us today — it&#39;s free.</p>
+    ${typeof error !== "undefined" && error ? '<div class="error-box">' + error + '</div>' : ''}
     <form method="POST" action="/auth/register">
       <div class="form-group">
         <label for="email">Email</label>
@@ -21,7 +16,6 @@
           autocomplete="email"
         />
       </div>
-
       <div class="form-group">
         <label for="password">Password</label>
         <input
@@ -33,10 +27,8 @@
           autocomplete="new-password"
         />
       </div>
-
       <button class="btn" type="submit">Create account</button>
     </form>
-
     <div class="link-row">
       Already have an account? <a href="/auth/login">Sign in</a>
     </div>

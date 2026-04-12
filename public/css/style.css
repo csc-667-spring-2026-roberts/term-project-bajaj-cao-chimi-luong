@@ -81,6 +81,31 @@ nav .logo:hover {
     transform: scale(1.05) rotate(-1deg);
 }
 
+nav span {
+    color: var(--muted);
+    font-size: 0.9rem;
+    font-weight: 600;
+}
+
+nav form button {
+    padding: 0.5rem 1.25rem;
+    background: transparent;
+    border: 2px solid var(--border);
+    border-radius: 8px;
+    color: var(--muted);
+    font-family: 'Nunito', sans-serif;
+    font-size: 0.85rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: border-color 0.2s, color 0.2s, box-shadow 0.2s;
+}
+
+nav form button:hover {
+    border-color: var(--accent);
+    color: var(--text);
+    box-shadow: 0 0 12px var(--accent-glow);
+}
+
 /* ─── Main ───────────────────────────────────────────── */
 main {
     flex: 1;
@@ -349,26 +374,6 @@ input::placeholder {
     margin: 1.5rem 0;
 }
 
-/* Lobby sign out button */
-.lobby-card form button {
-    padding: 0.65rem 1.75rem;
-    background: transparent;
-    border: 2px solid var(--border);
-    border-radius: 8px;
-    color: var(--muted);
-    font-family: 'Nunito', sans-serif;
-    font-size: 0.875rem;
-    font-weight: 700;
-    cursor: pointer;
-    transition: border-color 0.2s, color 0.2s, box-shadow 0.2s;
-}
-
-.lobby-card form button:hover {
-    border-color: var(--accent);
-    color: var(--text);
-    box-shadow: 0 0 12px var(--accent-glow);
-}
-
 /* ─── Flame flicker decorative corners ───────────────── */
 .lobby-card::after,
 .card::after {
@@ -393,122 +398,119 @@ input::placeholder {
     }
 }
 
-/* ─── Lobby layout ───────────────────────────────────── */
-.lobby-wrapper {
-    display: flex;
-    gap: 24px;
-    max-width: 900px;
-    margin: 40px auto;
-    padding: 0 20px;
-    align-items: flex-start;
-  }
-  
-  .profile-card {
-    background: rgba(255,255,255,0.05);
-    border: 1px solid rgba(255,165,0,0.3);
-    border-radius: 16px;
-    padding: 32px 24px;
-    text-align: center;
-    min-width: 260px;
-    flex-shrink: 0;
-  }
-  
-  .profile-card img {
-    width: 90px;
-    height: 90px;
-    border-radius: 50%;
-    border: 3px solid orange;
-    margin-bottom: 16px;
-  }
-  
-  .profile-card h1 {
-    font-size: 1.4rem;
-    margin: 0 0 6px;
-  }
-  
-  .profile-card .email {
-    font-size: 0.85rem;
-    opacity: 0.7;
-    margin: 0 0 4px;
-  }
-  
-  .profile-card .joined {
-    font-size: 0.75rem;
-    opacity: 0.5;
-    margin: 0 0 20px;
-  }
-  
-  .profile-card .sign-out-btn {
-    width: 100%;
-    padding: 10px;
-    background: transparent;
-    border: 1px solid rgba(255,165,0,0.5);
-    border-radius: 8px;
-    color: orange;
-    cursor: pointer;
-    font-size: 0.9rem;
-    transition: all 0.2s;
-  }
-  
-  .profile-card .sign-out-btn:hover {
-    background: rgba(255,165,0,0.1);
-  }
-  
-  .players-card {
-    flex: 1;
-    background: rgba(255,255,255,0.05);
-    border: 1px solid rgba(255,165,0,0.3);
-    border-radius: 16px;
-    padding: 28px;
-  }
-  
-  .players-card h2 {
-    margin: 0 0 16px;
-    font-size: 1.1rem;
-    color: orange;
-    display: flex;
+/* ─── Lobby Games Section ────────────────────────────── */
+main:has(.lobby-card) {
+    flex-direction: column;
     align-items: center;
-    gap: 8px;
-  }
-  
-  .refresh-btn {
-    background: rgba(255,165,0,0.15);
-    border: 1px solid rgba(255,165,0,0.4);
+    gap: 2rem;
+}
+
+main > h2 {
+    font-family: 'Bangers', cursive;
+    font-size: 2rem;
+    color: var(--yellow);
+    letter-spacing: 2px;
+    text-shadow: 2px 2px 0 var(--accent2);
+}
+
+main > section {
+    width: 100%;
+    max-width: 600px;
+}
+
+main > section h3 {
+    font-family: 'Bangers', cursive;
+    font-size: 1.4rem;
+    color: var(--accent);
+    letter-spacing: 1px;
+    margin-bottom: 1rem;
+}
+
+#create-game {
+    padding: 0.7rem 1.5rem;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    color: #fff;
+    border: none;
     border-radius: 8px;
-    color: orange;
-    padding: 8px 18px;
+    font-family: 'Bangers', cursive;
+    font-size: 1.1rem;
+    letter-spacing: 2px;
     cursor: pointer;
-    font-size: 0.85rem;
-    margin-bottom: 16px;
-    transition: all 0.2s;
-  }
-  
-  .refresh-btn:hover {
-    background: rgba(255,165,0,0.25);
-  }
-  
-  #user-list {
-    list-style: none;
-    padding: 0;
-    margin: 0;
+    margin-bottom: 1.25rem;
+    box-shadow: 0 4px 15px rgba(255, 60, 0, 0.4);
+    transition: transform 0.15s, box-shadow 0.15s;
+}
+
+#create-game:hover {
+    transform: translateY(-2px) scale(1.02);
+    box-shadow: 0 6px 25px rgba(255, 60, 0, 0.55);
+}
+
+#games-list {
     display: flex;
     flex-direction: column;
-    gap: 8px;
-  }
-  
-  #user-list .user-email {
-    background: rgba(255,255,255,0.04);
-    border: 1px solid rgba(255,255,255,0.08);
-    border-radius: 8px;
-    padding: 10px 14px;
-    font-size: 0.85rem;
-    opacity: 0.85;
+    gap: 10px;
+}
+
+.game-card {
+    background: var(--surface);
+    border: 2px solid var(--border);
+    border-radius: 10px;
+    padding: 1rem 1.25rem;
     display: flex;
     align-items: center;
-    gap: 8px;
-  }
-  
-  #user-list .user-email::before {
-    content: "👤";
+    gap: 12px;
+    flex-wrap: wrap;
     font-size: 0.9rem;
-  }
+    font-weight: 600;
+    color: var(--text);
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.game-card:hover {
+    border-color: var(--accent);
+    box-shadow: 0 0 12px var(--accent-glow);
+}
+
+.game-card [data-game-id] {
+    color: var(--yellow);
+    font-family: 'Bangers', cursive;
+    font-size: 1.05rem;
+    letter-spacing: 1px;
+}
+
+.game-card [data-creator] {
+    color: var(--muted);
+}
+
+.game-card [data-player-count] {
+    color: var(--accent);
+    font-weight: 800;
+}
+
+.game-card [data-status] {
+    color: var(--muted);
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.game-card form button {
+    padding: 0.4rem 1rem;
+    background: transparent;
+    border: 2px solid var(--accent);
+    border-radius: 6px;
+    color: var(--accent);
+    font-family: 'Nunito', sans-serif;
+    font-size: 0.8rem;
+    font-weight: 800;
+    cursor: pointer;
+    margin-left: auto;
+    transition: background 0.2s, color 0.2s, box-shadow 0.2s;
+}
+
+.game-card form button:hover {
+    background: var(--accent);
+    color: #fff;
+    box-shadow: 0 0 12px var(--accent-glow);
+}

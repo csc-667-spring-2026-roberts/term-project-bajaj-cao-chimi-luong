@@ -19,7 +19,7 @@ router.get("/register", (request, response) => {
     response.redirect("/auth/lobby");
     return;
   }
-  response.render("register", { error: null });
+  response.render("auth/register", { error: null });
 });
 
 router.get("/login", (request, response) => {
@@ -27,25 +27,25 @@ router.get("/login", (request, response) => {
     response.redirect("/auth/lobby");
     return;
   }
-  response.render("login", { error: null });
+  response.render("auth/login", { error: null });
 });
 
 router.post("/register", async (request: TypedRequestBody<UserLoginRequestBody>, response) => {
   const { email, password } = request.body;
 
   if (!email || !password) {
-    response.render("register", { error: "Email and password required" });
+    response.render("auth/register", { error: "Email and password required" });
     return;
   }
 
   if (password.length < 8) {
-    response.render("register", { error: "Password must be at least 8 characters" });
+    response.render("auth/register", { error: "Password must be at least 8 characters" });
     return;
   }
 
   try {
     if (await Users.existing(email)) {
-      response.render("register", { error: "Email already registered" });
+      response.render("auth/register", { error: "Email already registered" });
       return;
     }
 
@@ -60,7 +60,7 @@ router.post("/register", async (request: TypedRequestBody<UserLoginRequestBody>,
   } catch (error) {
     console.error("Registration error: ", error);
     const message = error instanceof Error ? error.message : "Registration failed";
-    response.render("register", { error: message });
+    response.render("auth/register", { error: message });
   }
 });
 
@@ -68,7 +68,7 @@ router.post("/login", async (request: TypedRequestBody<UserLoginRequestBody>, re
   const { email, password } = request.body;
 
   if (!email || !password) {
-    response.render("login", { error: "Email and password required" });
+    response.render("auth/login", { error: "Email and password required" });
     return;
   }
 
@@ -91,7 +91,7 @@ router.post("/login", async (request: TypedRequestBody<UserLoginRequestBody>, re
     response.redirect("/auth/lobby");
   } catch (error) {
     console.error("Login error: ", error);
-    response.render("login", { error: "Invalid email or password" });
+    response.render("auth/login", { error: "Invalid email or password" });
   }
 });
 

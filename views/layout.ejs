@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title><%= typeof title !== "undefined" ? title : "Exploding Kittens" %></title>
+  <link rel="stylesheet" href="/css/style.css?v=<%= Date.now() %>">
+</head>
+<body>
+  <nav>
+    <a class="logo" href="/">Exploding Kittens</a>
+    <% if (typeof user !== "undefined" && user) { %>
+      <form action="/auth/logout" method="POST">
+        <button type="submit">Logout</button>
+      </form>
+    <% } %>
+  </nav>
+  <main>
+    <% if (typeof error !== "undefined" && error) { %>
+      <div class="error-box"><%= error %></div>
+    <% } %>
+    <%- body %>
+  </main>
+</body>
+</html>
