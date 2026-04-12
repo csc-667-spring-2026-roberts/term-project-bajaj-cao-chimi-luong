@@ -4,6 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Lobby</title>
+  <script src="/js/lobby.js" defer></script>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Sans:wght@400;500;600&display=swap');
 
@@ -122,10 +123,35 @@
 
       <hr class="divider" />
 
-      <form method="POST" action="/auth/logout">
+      <form method="post" action="/auth/logout">
         <button type="submit">Sign out</button>
       </form>
     </div>
+     <% if (typeof error !== "undefined" && error) { %> 
+            <div class="error">
+                <%= error %>
+            </div>
+        <% } %>
+            <h2>Lobby</h2>
+        <section>
+            <h3>Games</h3>
+            <button id="create-game">Create Game</button>
+            <div id="games-list">
+                <p>Loading...</p>
+            </div>
+
+            <template id= "game-card-template">
+                <div class="game-card">
+                    <span data-game-id></span>
+                    <span data-creator></span>
+                    <span data-player-count></span>
+                    <span data-status></span>
+                    <form data-join method="post">
+                      <button>Join</button>
+                    </form>                    
+                </div>
+            </template>
+        </section>
   </main>
 </body>
 </html>

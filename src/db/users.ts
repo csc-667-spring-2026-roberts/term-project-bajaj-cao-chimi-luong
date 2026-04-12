@@ -3,7 +3,7 @@ import { DbUser, User } from "../types/types.js";
 
 const existing = async (email: string): Promise<boolean> => {
   try {
-    await db.none("SELECT id FROM users WHERE email= $1", [email]);
+    await db.oneOrNone("SELECT id FROM users WHERE email= $1", [email]);
     return false;
   } catch {
     return true;
@@ -19,4 +19,7 @@ const create = async (email: string, passwordHash: string, avatar: string): Prom
 const findByEmail = async (email: string): Promise<DbUser> =>
   await db.one<DbUser>("SELECT * FROM users WHERE email = $1", [email]);
 
-export default { existing, create, findByEmail };
+const getAll = async (): Promise<User[]> =>
+  await db.any<User>("SELECT id, email, gravatar_url, created_at FROM users");
+
+export default { existing, create, findByEmail, getAll };

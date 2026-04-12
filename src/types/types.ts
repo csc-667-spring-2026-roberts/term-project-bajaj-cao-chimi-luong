@@ -19,3 +19,27 @@ export interface User {
 export interface DbUser extends User {
   password_hash: string;
 }
+
+export enum GameStatus {
+  "waiting",
+  "started",
+  "ended",
+}
+
+export interface Game {
+  id: number;
+  status: GameStatus;
+  created_at: Date;
+}
+
+export interface GameListItem {
+  id: number;
+  status: GameStatus;
+  created_at: Date;
+  creator_email: string;
+  player_count: number;
+}
+
+export enum EventTypes {
+  "games_updated",
+}
