@@ -53,26 +53,70 @@ const playerCount = async (gameId: number): Promise<number> => {
   return result.count;
 };
 
-const DEAL_SQL = `
-  UPDATE game_cards
-  SET user_id=$1
-  WHERE game_id=$2
-  AND card_id IN (
-    SELECT card_id FROM game_cards
-    WHERE game_id=$2 AND user_id IS NULL
-    ORDER BY random()
-    LIMIT 26
-  )
-`;
-
 const deal = async (gameId: number): Promise<void> => {
-  const [playerOne, playerTwo] = await db.many<{ user_id: number }>(
-    "SELECT user_id FROM game_users WHERE game_id=$1 LIMIT 2",
+  const players = await db.many<{ user_id: number }>(
+    "SELECT user_id FROM game_users WHERE game_id=$1",
     [gameId],
   );
+  const playerCount = players.length;
 
-  await db.none(DEAL_SQL, [playerOne?.user_id, gameId]);
-  await db.none(DEAL_SQL, [playerTwo?.user_id, gameId]);
+  // give each player 1 defuse
+  for (const player of players) {
+    await db.none(
+      `UPDATE game_cards SET user_id=$1
+       WHERE game_id=$2 AND card_id = (
+         SELECT gc.card_id FROM game_cards gc
+         JOIN cards c ON c.id = gc.card_id
+         WHERE gc.game_id=$2 AND gc.user_id IS NULL AND c.type='defuse'
+         LIMIT 1
+       )`,
+      [player.user_id, gameId],
+    );
+  }
+
+  // shuffle 2 extra defuses back, remove rest
+  // extra defuses = total defuses (6) - playerCount (already dealt 1 each)
+  // keep min(2, remaining) in deck
+  await db.none(
+    `UPDATE game_cards SET user_id=0
+   WHERE game_id=$1 AND card_id IN (
+     SELECT gc.card_id FROM game_cards gc
+     JOIN cards c ON c.id = gc.card_id
+     WHERE gc.game_id=$1 AND gc.user_id IS NULL AND c.type='defuse'
+     ORDER BY random()
+     OFFSET LEAST(2, 6 - $2)
+   )`,
+    [gameId, playerCount],
+  );
+
+  // deal 7 random cards to each player (no exploding kittens, no defuses)
+  for (const player of players) {
+    await db.none(
+      `UPDATE game_cards SET user_id=$1
+       WHERE game_id=$2 AND card_id IN (
+         SELECT gc.card_id FROM game_cards gc
+         JOIN cards c ON c.id = gc.card_id
+         WHERE gc.game_id=$2 AND gc.user_id IS NULL
+         AND c.type NOT IN ('exploding_kitten', 'defuse')
+         ORDER BY random()
+         LIMIT 7
+       )`,
+      [player.user_id, gameId],
+    );
+  }
+
+  // insert playerCount - 1 exploding kittens back, remove rest
+  await db.none(
+    `UPDATE game_cards SET user_id=0
+    WHERE game_id=$1 AND card_id IN (
+      SELECT gc.card_id FROM game_cards gc
+      JOIN cards c ON c.id = gc.card_id
+      WHERE gc.game_id=$1 AND gc.user_id IS NULL AND c.type='exploding_kitten'
+      ORDER BY random()
+      OFFSET ($2 - 1)
+    )`,
+    [gameId, playerCount],
+  );
 };
 
 const GAME_STATE_SQL = `
@@ -97,4 +141,79 @@ const getPlayers = async (gameId: number): Promise<{ user_id: number }[]> =>
 const state = async (gameId: number): Promise<GameUserState[]> =>
   db.many<GameUserState>(GAME_STATE_SQL, [gameId]);
 
-export default { create, list, join, playerCount, deal, getPlayers, state };
+const drawCard = async (gameId: number, userId: number): Promise<{ type: string } | null> => {
+  return db.oneOrNone<{ type: string }>(
+    `UPDATE game_cards
+     SET user_id = $2
+     WHERE game_id = $1
+     AND card_id = (
+       SELECT card_id FROM game_cards
+       WHERE game_id = $1 AND user_id IS NULL
+       ORDER BY pile_position
+       LIMIT 1
+     )
+     RETURNING (SELECT c.type FROM cards c WHERE c.id = card_id)`,
+    [gameId, userId],
+  );
+};
+
+const shuffleDeck = async (gameId: number): Promise<void> => {
+  await db.none(
+    `UPDATE game_cards
+     SET pile_position = sub.new_pos
+     FROM (
+       SELECT card_id, ROW_NUMBER() OVER (ORDER BY random()) AS new_pos
+       FROM game_cards
+       WHERE game_id = $1 AND user_id IS NULL
+     ) sub
+     WHERE game_cards.game_id = $1 AND game_cards.card_id = sub.card_id`,
+    [gameId],
+  );
+};
+
+const deckCount = async (gameId: number): Promise<number> => {
+  const result = await db.one<{ count: number }>(
+    "SELECT COUNT(*)::int AS count FROM game_cards WHERE game_id=$1 AND user_id IS NULL",
+    [gameId],
+  );
+  return result.count;
+};
+
+const getHand = async (gameId: number, userId: number): Promise<{ type: string; id: number }[]> => {
+  return db.any<{ type: string; id: number }>(
+    `SELECT gc.card_id AS id, c.type FROM game_cards gc
+     JOIN cards c ON c.id = gc.card_id
+     WHERE gc.game_id=$1 AND gc.user_id=$2
+     ORDER BY gc.pile_position`,
+    [gameId, userId],
+  );
+};
+
+const playCard = async (gameId: number, userId: number, type: string): Promise<void> => {
+  await db.none(
+    `UPDATE game_cards SET user_id=0
+     WHERE game_id=$1 AND user_id=$2
+     AND card_id = (
+       SELECT gc.card_id FROM game_cards gc
+       JOIN cards c ON c.id = gc.card_id
+       WHERE gc.game_id=$1 AND gc.user_id=$2 AND c.type=$3
+       LIMIT 1
+     )`,
+    [gameId, userId, type],
+  );
+};
+
+export default {
+  create,
+  list,
+  join,
+  playerCount,
+  deal,
+  state,
+  getPlayers,
+  drawCard,
+  shuffleDeck,
+  deckCount,
+  getHand,
+  playCard,
+};

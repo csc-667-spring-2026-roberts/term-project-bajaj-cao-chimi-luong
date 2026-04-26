@@ -55,4 +55,21 @@ export interface GameState {
   id: number;
   whoami: number;
   players: GameUserState[];
+  deck_count: number;
+}
+
+export enum CardType {
+  exploding_kitten = "exploding_kitten",
+  defuse = "defuse",
+  attack = "attack",
+  skip = "skip",
+  favor = "favor",
+  shuffle = "shuffle",
+  see_the_future = "see_the_future",
+  nope = "nope",
+  taco_cat = "taco_cat",
+  beard_cat = "beard_cat",
+  rainbow_ralphing_cat = "rainbow_ralphing_cat",
+  cattermelon = "cattermelon",
+  hairy_potato_cat = "hairy_potato_cat",
 }

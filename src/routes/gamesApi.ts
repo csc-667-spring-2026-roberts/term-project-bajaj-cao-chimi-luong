@@ -36,10 +36,13 @@ router.post("/:id/join", async (request, response) => {
     await Games.join(gameId, userId);
     SSE.broadcast({ type: EventTypes.games_updated, games: await Games.list() });
 
-    await Games.deal(gameId);
-    response.redirect(`/games/${String(gameId)}`);
+    const count = await Games.playerCount(gameId);
+    if (count === 2) {
+      await Games.deal(gameId);
+    }
 
-    broadcastGameState(gameId, await Games.state(gameId));
+    response.redirect(`/games/${String(gameId)}`);
+    void broadcastGameState(gameId, await Games.state(gameId));
   } catch (error: unknown) {
     console.error({ error });
     response.redirect("/lobby");
@@ -52,14 +55,61 @@ router.post("/whoami", (request, response) => {
   response.json({ userId });
 });
 
+router.get("/:id/state", async (request, response) => {
+  const userId = request.session.user?.id;
+  if (!userId) {
+    response.status(401).json({ error: "Not authenticated" });
+    return;
+  }
+
+  const gameId = parseInt(request.params.id);
+  const players = await Games.state(gameId);
+  const deckCount = await Games.deckCount(gameId);
+
+  response.json({
+    state: {
+      id: gameId,
+      whoami: userId,
+      players,
+      deck_count: deckCount,
+    },
+  });
+});
+
+router.get("/:id/hand", async (request, response) => {
+  const userId = request.session.user?.id;
+  if (!userId) {
+    response.status(401).json({ error: "Not authenticated" });
+    return;
+  }
+  const gameId = parseInt(request.params.id);
+  const cards = await Games.getHand(gameId, userId);
+  response.json({ cards });
+});
+
+router.post("/:id/play", async (request, response) => {
+  const userId = request.session.user?.id;
+  if (!userId) {
+    response.status(401).json({ error: "Not authenticated" });
+    return;
+  }
+
+  const gameId = parseInt(request.params.id);
+  const { type } = request.body as { type: string };
+
+  await Games.playCard(gameId, userId, type);
+  await broadcastGameState(gameId, await Games.state(gameId));
+  response.json({ ok: true });
+});
+
 router.post("/:id/state", async (request) => {
   const gameId = parseInt(request.params.id);
   const state = await Games.state(gameId);
-
-  broadcastGameState(gameId, state);
+  await broadcastGameState(gameId, state);
 });
 
-const broadcastGameState = (gameId: number, players: GameUserState[]): void => {
+const broadcastGameState = async (gameId: number, players: GameUserState[]): Promise<void> => {
+  const deck_count = await Games.deckCount(gameId);
   players.forEach((value) => {
     SSE.broadcastToGameUser(gameId, value.user_id, {
       type: EventTypes.game_state_updated,
@@ -67,9 +117,34 @@ const broadcastGameState = (gameId: number, players: GameUserState[]): void => {
         id: gameId,
         whoami: value.user_id,
         players,
+        deck_count,
       },
     });
   });
 };
+
+router.post("/:id/draw", async (request, response) => {
+  const userId = request.session.user?.id;
+  if (!userId) {
+    response.status(401).json({ error: "Not authenticated" });
+    return;
+  }
+
+  const gameId = parseInt(request.params.id);
+  const card = await Games.drawCard(gameId, userId);
+  if (!card) {
+    response.status(400).json({ error: "No cards left" });
+    return;
+  }
+
+  await broadcastGameState(gameId, await Games.state(gameId));
+  response.json({ card });
+});
+
+router.post("/:id/shuffle", async (request, response) => {
+  const gameId = parseInt(request.params.id);
+  await Games.shuffleDeck(gameId);
+  response.json({ ok: true });
+});
 
 export default router;
