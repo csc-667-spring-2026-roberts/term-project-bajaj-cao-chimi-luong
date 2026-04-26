@@ -7,16 +7,9 @@
   <link rel="stylesheet" href="/css/style.css?v=<%= Date.now() %>">
 </head>
 <body>
-  <nav>
-    <a class="logo" href="/">Exploding Kittens</a>
-    <% if (typeof user !== "undefined" && user) { %>
-      <form action="/auth/logout" method="POST">
-        <button type="submit">Logout</button>
-      </form>
-    <% } %>
-  </nav>
-  <main>
-    <%- body %>
-  </main>
+  <%- include("partials/nav") %>
+    <main>
+                <%- body %>
+    </main>
 </body>
 </html>

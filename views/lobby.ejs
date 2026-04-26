@@ -11,7 +11,9 @@
   <h2>Lobby</h2>
   <section>
     <h3>Games</h3>
-    <button id="create-game">Create Game</button>
+    <form id="create-game" method="post" action="/games">
+                        <button type="submit">Create game</button>
+                    </form>
     <div id="games-list">
       <p>Loading...</p>
     </div>
@@ -21,7 +23,7 @@
         <span data-creator></span>
         <span data-player-count></span>
         <span data-status></span>
-        <form data-join method="post">
+        <form method="post">
           <button>Join</button>
         </form>
       </div>

@@ -24,7 +24,6 @@ export async function up(pgm: MigrationBuilder): Promise<void> {
     pgm.addConstraint("game_users", "game_users_pkey", {
         primaryKey: ["game_id", "user_id"]
     })
-
 }
 
 export async function down(pgm: MigrationBuilder): Promise<void> {

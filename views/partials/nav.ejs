@@ -1,0 +1,8 @@
+  <nav>
+    <a class="logo" href="/">Exploding Kittens</a>
+    <% if (typeof user !== "undefined" && user) { %>
+      <form action="/auth/logout" method="POST">
+        <button type="submit">Logout</button>
+      </form>
+    <% } %> 
+  </nav>

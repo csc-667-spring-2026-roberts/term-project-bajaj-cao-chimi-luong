@@ -1,24 +1,21 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Game</title>
-</head>
-<body>
-  <nav>
-    <span>Exploding Kittens</span>
-  </nav>
-  <main>
-  </main>
-     <main>
-        <% if (typeof error !== "undefined" && error) { %> 
-            <div class="error">
-                <%= error %>
-            </div>
-        <% } %>
-            <h2>Game <%= gameId %></h2>
-            <p>This is the game page</p>
-    </main>
-</body>
-</html>
+<% const title="Game" %>
+<%- include('layout', { title, body: `
+    <script src="/js/game.js" defer></script>
+    <h2>War Game ${gameId}</h2>
+    <div id="opponent"></div>
+    <div id="battlefield">
+      <div data-played-seat="0">-</div>
+      <div data-played-seat="1">-</div>
+    </div>
+    <div id="me">
+      <div></div>
+      <button id="play-button" disabled>Play Top Card</button>
+    </div>
+    <template id="player-state-card">
+      <div class="player-state">
+        <div class="email"></div>
+        <div class="card-count"><span></span> cards</div>
+      </div>
+    </template>
+    <input type="hidden" id="GAME_ID" value="${gameId}" />
+`, user }) %>

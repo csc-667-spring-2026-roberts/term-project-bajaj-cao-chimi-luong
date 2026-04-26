@@ -1,7 +1,7 @@
 import { NextFunction, Request, Response } from "express";
 
-const logging = (req: Request, _res: Response, next: NextFunction): void => {
-  console.log(`${new Date().toISOString()} ${req.method} ${req.path}`);
+const logging = (request: Request, _response: Response, next: NextFunction): void => {
+  console.log(`${new Date().toUTCString()} ${request.method} ${request.path}`);
   next();
 };
 

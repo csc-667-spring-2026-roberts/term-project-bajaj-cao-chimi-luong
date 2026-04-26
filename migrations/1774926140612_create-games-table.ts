@@ -1,13 +1,14 @@
 import { MigrationBuilder, PgType } from 'node-pg-migrate';
 
 export async function up(pgm: MigrationBuilder): Promise<void> {
-    pgm.createType("game_status", ["waiting", "in_progress", "completed"]);
+    pgm.createType("game_status", ["waiting", "started", "ended"]);
+
     pgm.createTable("games", {
         id: "id",
         status: {
             type: "game_status",
             notNull: true,
-            default: "waiting",
+            default: "waiting"
         },
         created_at: {
             type: `${PgType.TIMESTAMP}`,

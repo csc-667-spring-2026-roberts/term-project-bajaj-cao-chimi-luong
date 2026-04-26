@@ -1,9 +1,10 @@
-import { Router } from "express";
-import { requireAuth } from "../middleware/auth.js";
-import Users from "../db/users.js";
+import { NextFunction, Router, Request, Response } from "express";
 import crypto from "crypto";
 import bcrypt from "bcrypt";
+
+import Users from "../db/users.js";
 import { TypedRequestBody, UserLoginRequestBody } from "../types/types.js";
+
 const router = Router();
 
 const SALT_ROUNDS = 10;
@@ -14,20 +15,16 @@ function gravatarUrl(email: string): string {
   return `https://www.gravatar.com/avatar/${hash}?d=identicon`;
 }
 
-router.get("/register", (request, response) => {
+function redirectIfLoggedIn(request: Request, response: Response, next: NextFunction): void {
   if (request.session.user) {
-    response.redirect("/auth/lobby");
+    response.redirect("/lobby");
     return;
   }
-  response.render("auth/register", { error: null });
-});
+  next();
+}
 
-router.get("/login", (request, response) => {
-  if (request.session.user) {
-    response.redirect("/auth/lobby");
-    return;
-  }
-  response.render("auth/login", { error: null });
+router.get("/register", redirectIfLoggedIn, (_request, response) => {
+  response.render("auth/register", { path: "/auth/register" });
 });
 
 router.post("/register", async (request: TypedRequestBody<UserLoginRequestBody>, response) => {
@@ -45,7 +42,7 @@ router.post("/register", async (request: TypedRequestBody<UserLoginRequestBody>,
 
   try {
     if (await Users.existing(email)) {
-      response.render("auth/register", { error: "Email already registered" });
+      response.render("auth/register", { error: "Email is already registered" });
       return;
     }
 
@@ -55,13 +52,15 @@ router.post("/register", async (request: TypedRequestBody<UserLoginRequestBody>,
     const user = await Users.create(email, passwordHash, avatar);
 
     request.session.user = user;
-
-    response.redirect("/auth/lobby");
+    response.redirect("/lobby");
   } catch (error) {
-    console.error("Registration error: ", error);
-    const message = error instanceof Error ? error.message : "Registration failed";
-    response.render("auth/register", { error: message });
+    console.error("Registration error:", error);
+    response.render("auth/register", { error: "Registration failed" });
   }
+});
+
+router.get("/login", redirectIfLoggedIn, (_request, response) => {
+  response.render("auth/login");
 });
 
 router.post("/login", async (request: TypedRequestBody<UserLoginRequestBody>, response) => {
@@ -77,7 +76,6 @@ router.post("/login", async (request: TypedRequestBody<UserLoginRequestBody>, re
     const isMatch = await bcrypt.compare(password, dbUser.password_hash);
 
     if (!isMatch) {
-      // noinspection ExceptionCaughtLocallyJS
       throw new Error(`Match not found for ${email}`);
     }
 
@@ -87,10 +85,11 @@ router.post("/login", async (request: TypedRequestBody<UserLoginRequestBody>, re
       gravatar_url: dbUser.gravatar_url,
       created_at: dbUser.created_at,
     };
+
     request.session.user = user;
-    response.redirect("/auth/lobby");
+    response.redirect("/lobby");
   } catch (error) {
-    console.error("Login error: ", error);
+    console.error("Login error:", error);
     response.render("auth/login", { error: "Invalid email or password" });
   }
 });
@@ -98,22 +97,12 @@ router.post("/login", async (request: TypedRequestBody<UserLoginRequestBody>, re
 router.post("/logout", (request, response) => {
   request.session.destroy((error) => {
     if (error) {
-      console.error("Logout error: ", error);
-      response.render("lobby", { error: "Logout failed", user: request.session.user });
-      return;
+      console.error("Logout error:", error);
     }
+
     response.clearCookie("connect.sid");
     response.redirect("/auth/login");
   });
-});
-
-router.get("/lobby", requireAuth, (request, response) => {
-  response.render("lobby", { user: request.session.user });
-});
-
-router.get("/users", requireAuth, async (_request, response) => {
-  const users = await Users.getAll();
-  response.json(users);
 });
 
 export default router;

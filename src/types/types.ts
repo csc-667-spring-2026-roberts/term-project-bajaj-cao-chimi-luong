@@ -21,9 +21,9 @@ export interface DbUser extends User {
 }
 
 export enum GameStatus {
-  "waiting",
-  "started",
-  "ended",
+  waiting = "waiting",
+  started = "started",
+  ended = "ended",
 }
 
 export interface Game {
@@ -41,5 +41,18 @@ export interface GameListItem {
 }
 
 export enum EventTypes {
-  "games_updated",
+  games_updated = "games_updated",
+  game_state_updated = "game_state_updated",
+}
+
+export interface GameUserState extends Pick<User, "email" | "gravatar_url"> {
+  user_id: number;
+  seat: number;
+  card_count: number;
+}
+
+export interface GameState {
+  id: number;
+  whoami: number;
+  players: GameUserState[];
 }

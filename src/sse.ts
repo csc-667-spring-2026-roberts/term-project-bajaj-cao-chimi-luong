@@ -14,7 +14,7 @@ function addClient(response: Response, userId: number, gameId?: number): number 
 
   response.writeHead(200, {
     "Content-Type": "text/event-stream",
-    "Cache-control": "no-cache",
+    "Cache-Control": "no-cache",
     Connection: "keep-alive",
   });
 
@@ -57,4 +57,10 @@ function broadcastToGame(gameId: number, data: object): void {
   }
 }
 
-export default { addClient, broadcast, broadcastToGame, broadcastToGameUser, removeClient };
+export default {
+  addClient,
+  broadcast,
+  broadcastToGame,
+  broadcastToGameUser,
+  removeClient,
+};
