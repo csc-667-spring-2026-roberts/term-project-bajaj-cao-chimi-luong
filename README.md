@@ -15,8 +15,9 @@ CSC 667 Term Project — Spring 2026
 
 ```bash
 npm install
-cp .env .env
-# Edit .env with your database credentials
+npm run migrate:up
+npm run build:client
+# Supply your .env with your database credentials
 npm run dev
 ```
 
