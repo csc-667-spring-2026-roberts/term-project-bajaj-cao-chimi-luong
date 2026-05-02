@@ -117,6 +117,18 @@ const deal = async (gameId: number): Promise<void> => {
     )`,
     [gameId, playerCount],
   );
+
+  await db.none(
+    `UPDATE games 
+     SET current_turn_user_id = (
+       SELECT user_id FROM game_users 
+       WHERE game_id = $1 
+       ORDER BY seat ASC 
+       LIMIT 1
+     )
+     WHERE id = $1`,
+    [gameId],
+  );
 };
 
 const GAME_STATE_SQL = `
@@ -125,13 +137,15 @@ const GAME_STATE_SQL = `
     users.email,
     users.gravatar_url,
     game_users.seat,
-    COUNT(game_cards.card_id)::int AS card_count
+    COUNT(game_cards.card_id)::int AS card_count,
+    games.current_turn_user_id
   FROM game_users
-  JOIN users ON users.id=game_users.user_id
-  LEFT JOIN game_cards
-    ON game_cards.user_id=users.id AND game_cards.game_id=$1
-  WHERE game_users.game_id=$1
-  GROUP BY users.id, game_users.seat
+         JOIN users ON users.id = game_users.user_id
+         JOIN games ON games.id = game_users.game_id
+         LEFT JOIN game_cards
+                   ON game_cards.user_id = users.id AND game_cards.game_id = $1
+  WHERE game_users.game_id = $1
+  GROUP BY users.id, game_users.seat, games.current_turn_user_id
   ORDER BY game_users.seat ASC
 `;
 
