@@ -17,7 +17,7 @@
     "format": "prettier --write \"src/**/*.ts\"",
     "format:check": "prettier --check \"src/**/*.ts\"",
     "clean": "rm -rf dist/",
-    "prepare": "husky",
+    "prepare": "husky || true",
     "migrate": "node-pg-migrate -j ts create --",
     "migrate:up": "cross-env NODE_OPTIONS=\"--import tsx/esm\" node-pg-migrate up -j ts",
     "migrate:down": "cross-env NODE_OPTIONS=\"--import tsx/esm\" node-pg-migrate down -j ts"
