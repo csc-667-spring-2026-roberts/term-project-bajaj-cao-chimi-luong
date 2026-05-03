@@ -89,13 +89,20 @@ router.get("/:id/hand", async (request, response) => {
 
 router.post("/:id/play", async (request, response) => {
   const userId = request.session.user?.id;
+
+  //Not logged in
   if (!userId) {
     response.status(401).json({ error: "Not authenticated" });
     return;
   }
-
+  //parse the request: game id
   const gameId = parseInt(request.params.id);
   const { type } = request.body as { type: string };
+
+  if (!(await Games.validateTurn(gameId, userId))) {
+    response.status(402).json({ error: "Not your turn" });
+    return;
+  }
 
   await Games.playCard(gameId, userId, type);
   await broadcastGameState(gameId, await Games.state(gameId));
