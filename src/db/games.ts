@@ -2,19 +2,19 @@ import { Game, GameListItem, GameUserState } from "../types/types.js";
 import db from "./connection.js";
 
 const create = async (user_id: number): Promise<Game> => {
-  const game = await db.one<Game>("INSERT INTO games DEFAULT VALUES RETURNING *");
+  const game = await db.one<Game>(`INSERT INTO games (created_by_user) VALUES ($1) RETURNING *`, [
+    user_id,
+  ]);
 
-  await db.none("INSERT INTO game_users (game_id, user_id, seat) VALUES ($1, $2, 0)", [
+  await db.none(`INSERT INTO game_users (game_id, user_id, seat_position) VALUES ($1, $2, 0)`, [
     game.id,
     user_id,
   ]);
 
-  // location defaults to 'deck' via the migration DEFAULT
   await db.none(
-    `
-      INSERT INTO game_cards (game_id, card_id, user_id, pile_position)
-      SELECT $1, cards.id, NULL, ROW_NUMBER() OVER (ORDER BY RANDOM()) FROM cards
-    `,
+    `INSERT INTO game_cards (game_id, card_id, user_id, position)
+     SELECT $1, cards.id, NULL, ROW_NUMBER() OVER (ORDER BY RANDOM())
+     FROM cards`,
     [game.id],
   );
 
@@ -42,12 +42,12 @@ const join = async (gameId: number, userId: number): Promise<void> => {
   await db.tx(async (t) => {
     // add the player as seat 1
     await t.none(
-      "INSERT INTO game_users (game_id, user_id, seat) VALUES ($1, $2, 1) ON CONFLICT DO NOTHING",
+      "INSERT INTO game_users (game_id, user_id, seat_position) VALUES ($1, $2, 1) ON CONFLICT DO NOTHING",
       [gameId, userId],
     );
 
     // set status to started
-    await t.none("UPDATE games SET status = 'started' WHERE id = $1", [gameId]);
+    await t.none("UPDATE games SET status = 'IN_PROGRESS' WHERE id = $1", [gameId]);
   });
 };
 
@@ -65,7 +65,7 @@ const deal = async (gameId: number): Promise<void> => {
        WHERE game_id=$2 AND card_id = (
          SELECT gc.card_id FROM game_cards gc
                                   JOIN cards c ON c.id = gc.card_id
-         WHERE gc.game_id=$2 AND gc.location='deck' AND c.type='defuse'
+         WHERE gc.game_id=$2 AND gc.location='deck' AND c.card_type='defuse'
          LIMIT 1
          )`,
       [player.user_id, gameId],
@@ -79,7 +79,7 @@ const deal = async (gameId: number): Promise<void> => {
      WHERE game_id=$1 AND card_id IN (
        SELECT gc.card_id FROM game_cards gc
        JOIN cards c ON c.id = gc.card_id
-       WHERE gc.game_id=$1 AND gc.location='deck' AND c.type='defuse'
+       WHERE gc.game_id=$1 AND gc.location='deck' AND c.card_type='defuse'
        ORDER BY random()
        OFFSET LEAST(2, 6 - $2)
      )`,
@@ -95,7 +95,7 @@ const deal = async (gameId: number): Promise<void> => {
          SELECT gc.card_id FROM game_cards gc
                                   JOIN cards c ON c.id = gc.card_id
          WHERE gc.game_id=$2 AND gc.location='deck'
-           AND c.type NOT IN ('exploding_kitten', 'defuse')
+           AND c.card_type NOT IN ('exploding_kitten', 'defuse')
          ORDER BY random()
          LIMIT 7
          )`,
@@ -110,7 +110,7 @@ const deal = async (gameId: number): Promise<void> => {
      WHERE game_id=$1 AND card_id IN (
        SELECT gc.card_id FROM game_cards gc
                                 JOIN cards c ON c.id = gc.card_id
-       WHERE gc.game_id=$1 AND gc.location='deck' AND c.type='exploding_kitten'
+       WHERE gc.game_id=$1 AND gc.location='deck' AND c.card_type='exploding_kitten'
        ORDER BY random()
        OFFSET ($2 - 1)
        )`,
@@ -120,10 +120,10 @@ const deal = async (gameId: number): Promise<void> => {
   // set the first turn to seat 0 (the creator)
   await db.none(
     `UPDATE games
-     SET current_turn_user_id = (
+     SET current_seat_turn = (
        SELECT user_id FROM game_users
        WHERE game_id = $1
-       ORDER BY seat ASC
+       ORDER BY seat_position ASC
        LIMIT 1
        )
      WHERE id = $1`,
@@ -145,17 +145,17 @@ const GAME_STATE_SQL = `
     users.id AS user_id,
     users.email,
     users.gravatar_url,
-    game_users.seat,
+    game_users.seat_position,
     COUNT(game_cards.card_id)::int AS card_count,
-    games.current_turn_user_id
+    games.current_seat_turn
   FROM game_users
          JOIN users ON users.id = game_users.user_id
          JOIN games ON games.id = game_users.game_id
          LEFT JOIN game_cards
                    ON game_cards.user_id = users.id AND game_cards.game_id = $1
   WHERE game_users.game_id = $1
-  GROUP BY users.id, game_users.seat, games.current_turn_user_id
-  ORDER BY game_users.seat ASC
+  GROUP BY users.id, game_users.seat_position, games.current_seat_turn
+  ORDER BY game_users.seat_position ASC
 `;
 
 const getPlayers = async (gameId: number): Promise<{ user_id: number }[]> =>
@@ -164,17 +164,14 @@ const getPlayers = async (gameId: number): Promise<{ user_id: number }[]> =>
 const validateTurn = async (gameId: number, userId: number): Promise<boolean> => {
   const game = await db.one<{
     status: string;
-    current_turn_user_id: number;
-  }>("SELECT status, current_turn_user_id FROM games WHERE id = $1", [gameId]);
+    current_seat_turn: number;
+  }>("SELECT status, current_seat_turn FROM games WHERE id = $1", [gameId]);
 
-  if (game.status !== "started") {
+  if (game.status !== "IN_PROGRESS") {
     return false;
   }
 
-  if (game.current_turn_user_id !== userId) {
-    return false;
-  }
-  return true;
+  return game.current_seat_turn === userId;
 };
 
 const state = async (gameId: number): Promise<GameUserState[]> =>
@@ -188,10 +185,10 @@ const drawCard = async (gameId: number, userId: number): Promise<{ type: string 
        AND card_id = (
        SELECT card_id FROM game_cards
        WHERE game_id = $1 AND location = 'deck'
-       ORDER BY pile_position
+       ORDER BY position
        LIMIT 1
        )
-       RETURNING (SELECT c.type FROM cards c WHERE c.id = card_id)`,
+       RETURNING (SELECT c.card_type FROM cards c WHERE c.id = card_id)`,
     [gameId, userId],
   );
 };
@@ -199,7 +196,7 @@ const drawCard = async (gameId: number, userId: number): Promise<{ type: string 
 const shuffleDeck = async (gameId: number): Promise<void> => {
   await db.none(
     `UPDATE game_cards
-     SET pile_position = sub.new_pos
+     SET position = sub.new_pos
        FROM (
        SELECT card_id, ROW_NUMBER() OVER (ORDER BY random()) AS new_pos
        FROM game_cards
@@ -221,10 +218,10 @@ const deckCount = async (gameId: number): Promise<number> => {
 
 const getHand = async (gameId: number, userId: number): Promise<{ type: string; id: number }[]> => {
   return db.any<{ type: string; id: number }>(
-    `SELECT gc.card_id AS id, c.type FROM game_cards gc
+    `SELECT gc.card_id AS id, c.card_type FROM game_cards gc
                                             JOIN cards c ON c.id = gc.card_id
      WHERE gc.game_id = $1 AND gc.location = 'hand' AND gc.user_id = $2
-     ORDER BY gc.pile_position`,
+     ORDER BY gc.position`,
     [gameId, userId],
   );
 };
@@ -236,7 +233,7 @@ const playCard = async (gameId: number, userId: number, type: string): Promise<v
        AND card_id = (
        SELECT gc.card_id FROM game_cards gc
                                 JOIN cards c ON c.id = gc.card_id
-       WHERE gc.game_id = $1 AND gc.location = 'hand' AND gc.user_id = $2 AND c.type = $3
+       WHERE gc.game_id = $1 AND gc.location = 'hand' AND gc.user_id = $2 AND c.card_type = $3
        LIMIT 1
        )`,
     [gameId, userId, type],
@@ -245,10 +242,10 @@ const playCard = async (gameId: number, userId: number, type: string): Promise<v
 
 const getDiscard = async (gameId: number): Promise<{ type: string } | null> => {
   return db.oneOrNone<{ type: string }>(
-    `SELECT c.type FROM game_cards gc
+    `SELECT c.card_type FROM game_cards gc
                           JOIN cards c ON c.id = gc.card_id
      WHERE gc.game_id = $1 AND gc.location = 'discard'
-     ORDER BY gc.pile_position DESC
+     ORDER BY gc.position DESC
        LIMIT 1`,
     [gameId],
   );

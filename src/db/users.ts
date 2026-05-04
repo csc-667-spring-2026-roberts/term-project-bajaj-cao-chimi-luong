@@ -13,7 +13,7 @@ const existing = async (email: string): Promise<boolean> => {
 
 const create = async (email: string, passwordHash: string, avatar: string): Promise<User> =>
   await db.one<User>(
-    "INSERT INTO users (email, password_hash, gravatar_url) VALUES ($1, $2, $3) RETURNING id, email, gravatar_url, created_at",
+    "INSERT INTO users (email, pw_hash, gravatar_url) VALUES ($1, $2, $3) RETURNING id, email, gravatar_url, created_at",
     [email, passwordHash, avatar],
   );
 

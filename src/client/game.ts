@@ -1,35 +1,19 @@
 import { EventTypes, GameState, GameUserState, CardType } from "../types/types.js";
 
 const CARD_META: Record<CardType, string> = {
-  exploding_kitten: "Exploding Kitten",
-  defuse: "Defuse",
-  attack: "Attack",
-  skip: "Skip",
-  favor: "Favor",
-  shuffle: "Shuffle",
-  see_the_future: "See the Future",
-  nope: "Nope",
-  taco_cat: "Taco Cat",
-  beard_cat: "Beard Cat",
-  rainbow_ralphing_cat: "Rainbow Cat",
-  cattermelon: "Cattermelon",
-  hairy_potato_cat: "Potato Cat",
+  EXPLODING_KITTEN: "Exploding Kitten",
+  DEFUSE: "Defuse",
+  SKIP: "Skip",
+  SHUFFLE: "Shuffle",
+  SEE_THE_FUTURE: "See the Future",
 };
 
 const CARD_IMAGES: Partial<Record<CardType, string>> = {
-  exploding_kitten: "/card-sprites/Exploding-Kittens-House-Grenade.webp",
-  defuse: "/card-sprites/Exploding-Kittens-Defuse.webp",
-  attack: "/card-sprites/Exploding-Kittens-Attack.webp",
-  skip: "/card-sprites/Exploding-Kittens-Skip.webp",
-  favor: "/card-sprites/Exploding-Kittens-Favor.webp",
-  shuffle: "/card-sprites/Exploding-Kittens-Shuffle.webp",
-  see_the_future: "/card-sprites/Exploding-Kittens-See-The-Future.webp",
-  nope: "/card-sprites/Exploding-Kittens-Nope.webp",
-  taco_cat: "/card-sprites/Exploding-Kittens-Taco-Cat.webp",
-  beard_cat: "/card-sprites/Exploding-Kittens-Beard-Cat.webp",
-  rainbow_ralphing_cat: "/card-sprites/Exploding-Kittens-Rainbow-Cat.webp",
-  cattermelon: "/card-sprites/Exploding-Kittens-Cattermelon.jpg",
-  hairy_potato_cat: "/card-sprites/Exploding-Kittens-Potato-Cat.webp",
+  EXPLODING_KITTEN: "/card-sprites/Exploding-Kittens-House-Grenade.webp",
+  DEFUSE: "/card-sprites/Exploding-Kittens-Defuse.webp",
+  SKIP: "/card-sprites/Exploding-Kittens-Skip.webp",
+  SHUFFLE: "/card-sprites/Exploding-Kittens-Shuffle.webp",
+  SEE_THE_FUTURE: "/card-sprites/Exploding-Kittens-See-The-Future.webp",
 };
 
 const template = document.querySelector<HTMLTemplateElement>("#player-state-card");
@@ -156,7 +140,12 @@ async function renderHand(gameId: string, _userId: number): Promise<void> {
   });
 
   if (newCardIndex > 0) {
-    setTimeout(() => { setStatus("Your turn"); }, newCardIndex * 100 + 400);
+    setTimeout(
+      () => {
+        setStatus("Your turn");
+      },
+      newCardIndex * 100 + 400,
+    );
   }
 }
 

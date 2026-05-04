@@ -21,9 +21,9 @@ export interface DbUser extends User {
 }
 
 export enum GameStatus {
-  waiting = "waiting",
-  started = "started",
-  ended = "ended",
+  WAITING_TO_START = "WAITING_TO_START",
+  IN_PROGRESS = "IN_PROGRESS",
+  FINISHED = "FINISHED",
 }
 
 export interface Game {
@@ -47,7 +47,7 @@ export enum EventTypes {
 
 export interface GameUserState extends Pick<User, "email" | "gravatar_url"> {
   user_id: number;
-  seat: number;
+  seat_position: number;
   card_count: number;
 }
 
@@ -59,17 +59,9 @@ export interface GameState {
 }
 
 export enum CardType {
-  exploding_kitten = "exploding_kitten",
-  defuse = "defuse",
-  attack = "attack",
-  skip = "skip",
-  favor = "favor",
-  shuffle = "shuffle",
-  see_the_future = "see_the_future",
-  nope = "nope",
-  taco_cat = "taco_cat",
-  beard_cat = "beard_cat",
-  rainbow_ralphing_cat = "rainbow_ralphing_cat",
-  cattermelon = "cattermelon",
-  hairy_potato_cat = "hairy_potato_cat",
+  EXPLODING_KITTEN = "EXPLODING_KITTEN",
+  DEFUSE = "DEFUSE",
+  SKIP = "SKIP",
+  SHUFFLE = "SHUFFLE",
+  SEE_THE_FUTURE = "SEE_THE_FUTURE",
 }
