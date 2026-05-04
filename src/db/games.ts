@@ -65,7 +65,7 @@ const deal = async (gameId: number): Promise<void> => {
        WHERE game_id=$2 AND card_id = (
          SELECT gc.card_id FROM game_cards gc
                                   JOIN cards c ON c.id = gc.card_id
-         WHERE gc.game_id=$2 AND gc.location='deck' AND c.card_type='defuse'
+         WHERE gc.game_id=$2 AND gc.location='deck' AND c.card_type='DEFUSE'
          LIMIT 1
          )`,
       [player.user_id, gameId],
@@ -79,7 +79,7 @@ const deal = async (gameId: number): Promise<void> => {
      WHERE game_id=$1 AND card_id IN (
        SELECT gc.card_id FROM game_cards gc
        JOIN cards c ON c.id = gc.card_id
-       WHERE gc.game_id=$1 AND gc.location='deck' AND c.card_type='defuse'
+       WHERE gc.game_id=$1 AND gc.location='deck' AND c.card_type='DEFUSE'
        ORDER BY random()
        OFFSET LEAST(2, 6 - $2)
      )`,
@@ -95,7 +95,7 @@ const deal = async (gameId: number): Promise<void> => {
          SELECT gc.card_id FROM game_cards gc
                                   JOIN cards c ON c.id = gc.card_id
          WHERE gc.game_id=$2 AND gc.location='deck'
-           AND c.card_type NOT IN ('exploding_kitten', 'defuse')
+           AND c.card_type NOT IN ('EXPLODING_KITTEN', 'DEFUSE')
          ORDER BY random()
          LIMIT 7
          )`,
@@ -110,7 +110,7 @@ const deal = async (gameId: number): Promise<void> => {
      WHERE game_id=$1 AND card_id IN (
        SELECT gc.card_id FROM game_cards gc
                                 JOIN cards c ON c.id = gc.card_id
-       WHERE gc.game_id=$1 AND gc.location='deck' AND c.card_type='exploding_kitten'
+       WHERE gc.game_id=$1 AND gc.location='deck' AND c.card_type='EXPLODING_KITTEN'
        ORDER BY random()
        OFFSET ($2 - 1)
        )`,
