@@ -218,7 +218,7 @@ const deckCount = async (gameId: number): Promise<number> => {
 
 const getHand = async (gameId: number, userId: number): Promise<{ type: string; id: number }[]> => {
   return db.any<{ type: string; id: number }>(
-    `SELECT gc.card_id AS id, c.card_type FROM game_cards gc
+    `SELECT gc.card_id AS id, c.card_type AS type FROM game_cards gc
                                             JOIN cards c ON c.id = gc.card_id
      WHERE gc.game_id = $1 AND gc.location = 'hand' AND gc.user_id = $2
      ORDER BY gc.position`,

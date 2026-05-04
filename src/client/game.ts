@@ -67,8 +67,13 @@ function renderPlayer(player: GameUserState): HTMLElement {
   const clone = template?.content.cloneNode(true) as DocumentFragment;
   const emailElement = clone.querySelector<HTMLDivElement>(".player-email");
   const countElement = clone.querySelector<HTMLSpanElement>(".player-card-count span");
+  const avatarElement = clone.querySelector<HTMLImageElement>(".player-avatar");
   if (emailElement) emailElement.textContent = player.email;
   if (countElement) countElement.textContent = String(player.card_count);
+  if (avatarElement && player.gravatar_url) {
+    avatarElement.src = player.gravatar_url;
+    avatarElement.alt = player.email;
+  }
   return clone.firstElementChild as HTMLElement;
 }
 
