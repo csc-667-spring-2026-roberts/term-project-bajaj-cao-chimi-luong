@@ -88,6 +88,7 @@ router.get("/:id/hand", async (request, response) => {
 });
 
 router.get("/:id/validate", async (request, response) => {
+  //TESTING API CALL FOR VALIDATION
   const userId = request.session.user?.id;
   const gameId = parseInt(request.params.id);
   if (await Games.validateTurn(gameId, <number>userId)) console.log("TRUE");
@@ -155,12 +156,13 @@ router.post("/:id/draw", async (request, response) => {
     response.status(400).json({ error: "No cards left" });
     return;
   }
-  //await Games.advanceTurn(gameId);
+  await Games.advanceTurn(gameId);
   await broadcastGameState(gameId, await Games.state(gameId));
   response.json({ card });
 });
 
 router.post("/:id/shuffle", async (request, response) => {
+  //Redundant api call. Use /play with shuffle card id
   const gameId = parseInt(request.params.id);
   await Games.shuffleDeck(gameId);
   response.json({ ok: true });

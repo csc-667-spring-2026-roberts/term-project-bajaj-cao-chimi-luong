@@ -242,19 +242,17 @@ const getDiscard = async (gameId: number): Promise<{ type: string } | null> => {
 const advanceTurn = async (gameId: number): Promise<void> => {
   await db.none(
     `UPDATE games
-     SET current_seat_turn = (
-       SELECT user_id FROM game_users
-       WHERE game_id = $1
-         AND seat_position = (
-           SELECT (gu.seat_position + 1) % (
-             SELECT COUNT(*) FROM game_users WHERE game_id = $1
-           )
-           FROM game_users gu
-           WHERE gu.game_id = $1
-             AND gu.user_id = current_seat_turn
-         )
-       LIMIT 1
-     )
+     SET current_seat_turn = COALESCE(
+       (SELECT MIN(seat_position)
+        FROM game_users
+        WHERE game_id = $1
+          AND seat_position > (
+          SELECT current_seat_turn FROM games WHERE id = $1
+        )),
+       (SELECT MIN(seat_position)
+        FROM game_users
+        WHERE game_id = $1)
+                             )
      WHERE id = $1`,
     [gameId],
   );
