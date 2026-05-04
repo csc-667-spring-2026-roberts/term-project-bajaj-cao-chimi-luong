@@ -116,19 +116,6 @@ const deal = async (gameId: number): Promise<void> => {
        )`,
     [gameId, playerCount],
   );
-
-  // set the first turn to seat 0 (the creator)
-  await db.none(
-    `UPDATE games
-     SET current_seat_turn = (
-       SELECT user_id FROM game_users
-       WHERE game_id = $1
-       ORDER BY seat_position ASC
-       LIMIT 1
-       )
-     WHERE id = $1`,
-    [gameId],
-  );
 };
 
 const playerCount = async (gameId: number): Promise<number> => {
@@ -162,16 +149,17 @@ const getPlayers = async (gameId: number): Promise<{ user_id: number }[]> =>
   db.any("SELECT user_id FROM game_users WHERE game_id=$1", [gameId]);
 
 const validateTurn = async (gameId: number, userId: number): Promise<boolean> => {
-  const game = await db.one<{
-    status: string;
-    current_seat_turn: number;
-  }>("SELECT status, current_seat_turn FROM games WHERE id = $1", [gameId]);
+  const result: { [key: string]: never } | null = await db.oneOrNone(
+    `SELECT 1
+     FROM game_users gu
+     JOIN games g ON gu.game_id = g.id
+     WHERE gu.game_id = $1
+     AND gu.user_id = $2
+     AND gu.seat_position = g.current_seat_turn`,
+    [gameId, userId],
+  );
 
-  if (game.status !== "IN_PROGRESS") {
-    return false;
-  }
-
-  return game.current_seat_turn === userId;
+  return result !== null;
 };
 
 const state = async (gameId: number): Promise<GameUserState[]> =>
@@ -251,6 +239,27 @@ const getDiscard = async (gameId: number): Promise<{ type: string } | null> => {
   );
 };
 
+const advanceTurn = async (gameId: number): Promise<void> => {
+  await db.none(
+    `UPDATE games
+     SET current_seat_turn = (
+       SELECT user_id FROM game_users
+       WHERE game_id = $1
+         AND seat_position = (
+           SELECT (gu.seat_position + 1) % (
+             SELECT COUNT(*) FROM game_users WHERE game_id = $1
+           )
+           FROM game_users gu
+           WHERE gu.game_id = $1
+             AND gu.user_id = current_seat_turn
+         )
+       LIMIT 1
+     )
+     WHERE id = $1`,
+    [gameId],
+  );
+};
+
 export default {
   create,
   list,
@@ -266,4 +275,5 @@ export default {
   playCard,
   getDiscard,
   validateTurn,
+  advanceTurn,
 };

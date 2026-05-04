@@ -87,6 +87,14 @@ router.get("/:id/hand", async (request, response) => {
   response.json({ cards });
 });
 
+router.get("/:id/validate", async (request, response) => {
+  const userId = request.session.user?.id;
+  const gameId = parseInt(request.params.id);
+  if (await Games.validateTurn(gameId, <number>userId)) console.log("TRUE");
+  else console.log("FALSE");
+  response.json({ ok: true });
+});
+
 router.post("/:id/play", async (request, response) => {
   const userId = request.session.user?.id;
 
@@ -132,18 +140,22 @@ const broadcastGameState = async (gameId: number, players: GameUserState[]): Pro
 
 router.post("/:id/draw", async (request, response) => {
   const userId = request.session.user?.id;
+  const gameId = parseInt(request.params.id);
   if (!userId) {
     response.status(401).json({ error: "Not authenticated" });
     return;
   }
+  if (!(await Games.validateTurn(gameId, userId))) {
+    response.status(401).json({ error: "Not your turn" });
+    return;
+  }
 
-  const gameId = parseInt(request.params.id);
   const card = await Games.drawCard(gameId, userId);
   if (!card) {
     response.status(400).json({ error: "No cards left" });
     return;
   }
-
+  //await Games.advanceTurn(gameId);
   await broadcastGameState(gameId, await Games.state(gameId));
   response.json({ card });
 });
