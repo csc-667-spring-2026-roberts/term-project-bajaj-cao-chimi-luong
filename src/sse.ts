@@ -4,6 +4,7 @@ interface Client {
   response: Response;
   userId: number;
   gameId?: number;
+  keepalive: NodeJS.Timeout;
 }
 
 const clients = new Map<number, Client>();
@@ -20,12 +21,26 @@ function addClient(response: Response, userId: number, gameId?: number): number 
 
   response.write(":ok\n\n");
 
-  clients.set(id, { response, userId, gameId });
+  const keepalive = setInterval(() => {
+    try {
+      response.write(":ping\n\n");
+    } catch {
+      clearInterval(keepalive);
+    }
+  }, 25_000);
+
+  clients.set(id, { response, userId, gameId, keepalive });
 
   return id;
 }
 
 function removeClient(id: number): void {
+  const client = clients.get(id);
+
+  if (client) {
+    clearInterval(client.keepalive);
+  }
+
   clients.delete(id);
 }
 

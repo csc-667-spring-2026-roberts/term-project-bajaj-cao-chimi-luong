@@ -5,7 +5,7 @@
   "main": "dist/index.js",
   "type": "module",
   "scripts": {
-    "build": "tsc",
+    "build": "npm run build:server && npm run build:client && npm run migrate:up",
     "build:server": "tsc",
     "build:client": "esbuild src/client/*.ts --bundle --outdir=public/js --sourcemap",
     "start": "node dist/server.js",
@@ -17,7 +17,7 @@
     "format": "prettier --write \"src/**/*.ts\"",
     "format:check": "prettier --check \"src/**/*.ts\"",
     "clean": "rm -rf dist/",
-    "prepare": "husky",
+    "prepare": "husky || true",
     "migrate": "node-pg-migrate -j ts create --",
     "migrate:up": "cross-env NODE_OPTIONS=\"--import tsx/esm\" node-pg-migrate up -j ts",
     "migrate:down": "cross-env NODE_OPTIONS=\"--import tsx/esm\" node-pg-migrate down -j ts"
