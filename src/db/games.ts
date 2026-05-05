@@ -181,10 +181,10 @@ const deckCount = async (gameId: number): Promise<number> => {
 
 const getHand = async (gameId: number, userId: number): Promise<{ type: string; id: number }[]> => {
   return db.any<{ type: string; id: number }>(
-    `SELECT gc.card_id AS id, c.type FROM game_cards gc
+    `SELECT gc.card_id AS id, c.card_type AS type FROM game_cards gc
      JOIN cards c ON c.id = gc.card_id
-     WHERE gc.game_id=$1 AND gc.user_id=$2
-     ORDER BY gc.pile_position`,
+     WHERE gc.game_id = $1 AND gc.location = 'hand' AND gc.user_id = $2
+     ORDER BY gc.card_id`,
     [gameId, userId],
   );
 };
@@ -203,6 +203,57 @@ const playCard = async (gameId: number, userId: number, type: string): Promise<v
   );
 };
 
+const getDiscard = async (gameId: number): Promise<{ type: string } | null> => {
+  return db.oneOrNone<{ type: string }>(
+    `SELECT c.card_type FROM game_cards gc
+                          JOIN cards c ON c.id = gc.card_id
+     WHERE gc.game_id = $1 AND gc.location = 'discard'
+     ORDER BY gc.position DESC
+       LIMIT 1`,
+    [gameId],
+  );
+};
+
+const advanceTurn = async (gameId: number): Promise<void> => {
+  await db.none(
+    `UPDATE games
+     SET current_seat_turn = COALESCE(
+       (SELECT MIN(seat_position)
+        FROM game_users
+        WHERE game_id = $1
+          AND seat_position > (
+          SELECT current_seat_turn FROM games WHERE id = $1
+        )),
+       (SELECT MIN(seat_position)
+        FROM game_users
+        WHERE game_id = $1)
+                             )
+     WHERE id = $1`,
+    [gameId],
+  );
+};
+
+const stealCard = async (
+  gameId: number,
+  fromUserId: number,
+  toUserId: number,
+  index: number,
+): Promise<{ type: string; id: number } | null> => {
+  return db.oneOrNone<{ type: string; id: number }>(
+    `UPDATE game_cards SET user_id=$2
+     WHERE game_id=$1 AND user_id=$3
+     AND card_id = (
+       SELECT card_id FROM game_cards
+       WHERE game_id=$1 AND location='hand' AND user_id=$3
+       ORDER BY card_id
+       LIMIT 1
+       OFFSET $4
+     )
+     RETURNING card_id AS id, (SELECT c.card_type FROM cards c WHERE c.id = card_id) AS type`,
+    [gameId, toUserId, fromUserId, index],
+  );
+};
+
 export default {
   create,
   list,
@@ -216,4 +267,8 @@ export default {
   deckCount,
   getHand,
   playCard,
+  getDiscard,
+  validateTurn,
+  advanceTurn,
+  stealCard,
 };

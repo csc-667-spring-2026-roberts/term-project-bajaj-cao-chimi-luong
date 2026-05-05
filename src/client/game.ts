@@ -1,35 +1,21 @@
 import { EventTypes, GameState, GameUserState, CardType } from "../types/types.js";
 
 const CARD_META: Record<CardType, string> = {
-  exploding_kitten: "Exploding Kitten",
-  defuse: "Defuse",
-  attack: "Attack",
-  skip: "Skip",
-  favor: "Favor",
-  shuffle: "Shuffle",
-  see_the_future: "See the Future",
-  nope: "Nope",
-  taco_cat: "Taco Cat",
-  beard_cat: "Beard Cat",
-  rainbow_ralphing_cat: "Rainbow Cat",
-  cattermelon: "Cattermelon",
-  hairy_potato_cat: "Potato Cat",
+  EXPLODING_KITTEN: "Exploding Kitten",
+  DEFUSE: "Defuse",
+  SKIP: "Skip",
+  SHUFFLE: "Shuffle",
+  SEE_THE_FUTURE: "See the Future",
+  STEAL: "Steal",
 };
 
 const CARD_IMAGES: Partial<Record<CardType, string>> = {
-  exploding_kitten: "/card-sprites/Exploding-Kittens-House-Grenade.webp",
-  defuse: "/card-sprites/Exploding-Kittens-Defuse.webp",
-  attack: "/card-sprites/Exploding-Kittens-Attack.webp",
-  skip: "/card-sprites/Exploding-Kittens-Skip.webp",
-  favor: "/card-sprites/Exploding-Kittens-Favor.webp",
-  shuffle: "/card-sprites/Exploding-Kittens-Shuffle.webp",
-  see_the_future: "/card-sprites/Exploding-Kittens-See-The-Future.webp",
-  nope: "/card-sprites/Exploding-Kittens-Nope.webp",
-  taco_cat: "/card-sprites/Exploding-Kittens-Taco-Cat.webp",
-  beard_cat: "/card-sprites/Exploding-Kittens-Beard-Cat.webp",
-  rainbow_ralphing_cat: "/card-sprites/Exploding-Kittens-Rainbow-Cat.webp",
-  cattermelon: "/card-sprites/Exploding-Kittens-Cattermelon.jpg",
-  hairy_potato_cat: "/card-sprites/Exploding-Kittens-Potato-Cat.webp",
+  EXPLODING_KITTEN: "/card-sprites/Exploding-Kittens-House-Grenade.webp",
+  DEFUSE: "/card-sprites/Exploding-Kittens-Defuse.webp",
+  SKIP: "/card-sprites/Exploding-Kittens-Skip.webp",
+  SHUFFLE: "/card-sprites/Exploding-Kittens-Shuffle.webp",
+  SEE_THE_FUTURE: "/card-sprites/Exploding-Kittens-See-The-Future.webp",
+  STEAL: "/card-sprites/Exploding-Kittens-Favor.webp",
 };
 
 const template = document.querySelector<HTMLTemplateElement>("#player-state-card");
@@ -43,6 +29,7 @@ const deckStack = document.querySelector<HTMLDivElement>("#draw-deck");
 const deckCountLabel = document.querySelector<HTMLDivElement>("#deck-count-label");
 const gameStatus = document.querySelector<HTMLDivElement>("#game-status");
 const gameId = gameIdInput?.value ?? "-1";
+let opponentUserId: number | null = null;
 
 function setStatus(message: string): void {
   if (gameStatus) gameStatus.textContent = message;
@@ -109,6 +96,7 @@ function renderDeck(count: number): void {
 function renderState(state: GameState): void {
   const meState = state.players.find((p) => p.user_id === state.whoami);
   const opponentState = state.players.find((p) => p.user_id !== state.whoami);
+  if (opponentState) opponentUserId = opponentState.user_id;
 
   if (meState && meContainer) meContainer.replaceChildren(renderPlayer(meState));
   if (opponentState && opponentContainer)
@@ -142,6 +130,17 @@ async function renderHand(gameId: string, _userId: number): Promise<void> {
   const { cards } = (await res.json()) as { cards: { type: CardType; id: number }[] };
   if (!myHand) return;
 
+  const currentCardIds = new Set(cards.map((c) => c.id));
+
+  // remove cards that are no longer in hand
+  myHand.querySelectorAll<HTMLElement>(".card-wrapper").forEach((wrapper) => {
+    const id = parseInt(wrapper.dataset.cardId ?? "0");
+    if (!currentCardIds.has(id)) {
+      renderedCards.delete(id);
+      wrapper.remove();
+    }
+  });
+
   let newCardIndex = 0;
   cards.forEach((card) => {
     if (renderedCards.has(card.id)) return;
@@ -156,7 +155,12 @@ async function renderHand(gameId: string, _userId: number): Promise<void> {
   });
 
   if (newCardIndex > 0) {
-    setTimeout(() => { setStatus("Your turn"); }, newCardIndex * 100 + 400);
+    setTimeout(
+      () => {
+        setStatus("Your turn");
+      },
+      newCardIndex * 100 + 400,
+    );
   }
 }
 
@@ -181,6 +185,85 @@ if (discardZone) {
   });
 }
 
+function triggerSteal(): void {
+  myHand?.querySelectorAll<HTMLElement>(".card-wrapper").forEach((c) => {
+    c.draggable = false;
+  });
+  setStatus("Choose a player to steal from!");
+  showPlayerPicker();
+}
+
+function showStealPicker(count: number, fromUserId: number): void {
+  const picker = document.createElement("div");
+  picker.id = "steal-picker";
+  picker.innerHTML = `<div class="steal-title">Choose a card to steal</div>`;
+  const cardRow = document.createElement("div");
+  cardRow.className = "steal-card-row";
+
+  for (let i = 0; i < count; i++) {
+    const card = document.createElement("div");
+    card.className = "card-wrapper steal-option";
+    card.innerHTML = `<div class="card-face card-back-face"><div class="card-back-layer" style="position:relative;top:0;left:0;"></div></div>`;
+    card.addEventListener("click", () => void confirmSteal(i, picker, fromUserId));
+    cardRow.appendChild(card);
+  }
+
+  picker.appendChild(cardRow);
+  document.body.appendChild(picker);
+}
+
+function showPlayerPicker(): void {
+  const picker = document.createElement("div");
+  picker.id = "steal-picker";
+  picker.innerHTML = `<div class="steal-title">Choose a player to steal from</div>`;
+
+  const playerRow = document.createElement("div");
+  playerRow.className = "steal-card-row";
+
+  // for each opponent add a button
+  const opponents = document.querySelectorAll<HTMLElement>("#opponent-info .player-state");
+  opponents.forEach((opponent) => {
+    const email = opponent.querySelector<HTMLElement>(".player-email")?.textContent ?? "Opponent";
+    const btn = document.createElement("button");
+    btn.className = "steal-player-btn";
+    btn.textContent = email;
+    btn.addEventListener("click", () => {
+      picker.remove();
+      const countEl = opponent.querySelector<HTMLElement>(".player-card-count span");
+      const count = parseInt(countEl?.textContent ?? "0");
+      showStealPicker(count, opponentUserId ?? 0);
+    });
+    playerRow.appendChild(btn);
+  });
+
+  picker.appendChild(playerRow);
+  document.body.appendChild(picker);
+}
+
+async function confirmSteal(index: number, picker: HTMLElement, fromUserId: number): Promise<void> {
+  picker.remove();
+  const res = await fetch(`/api/games/${gameId}/steal`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ fromUserId, index }),
+  });
+
+  if (!res.ok) {
+    setStatus("Steal failed");
+    return;
+  }
+
+  const { card } = (await res.json()) as { card: { type: CardType; id: number } };
+
+  myHand?.querySelectorAll<HTMLElement>(".card-wrapper").forEach((c) => {
+    c.draggable = true;
+  });
+
+  renderedCards.add(card.id);
+  const el = makeCardEl(card.type, card.id);
+  myHand?.appendChild(el);
+  setStatus(`Stole a ${CARD_META[card.type]}!`);
+}
 async function playCard(type: CardType): Promise<void> {
   const card = myHand?.querySelector<HTMLElement>(`[data-card-type="${type}"]`);
   const cardId = parseInt(card?.dataset.cardId ?? "0");
@@ -201,6 +284,10 @@ async function playCard(type: CardType): Promise<void> {
     const discardEl = makeCardEl(type, 0, false);
     discardEl.draggable = false;
     discardZone.appendChild(discardEl);
+  }
+
+  if (type === CardType.STEAL) {
+    triggerSteal();
   }
 }
 

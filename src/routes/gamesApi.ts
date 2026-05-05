@@ -97,6 +97,11 @@ router.post("/:id/play", async (request, response) => {
   const gameId = parseInt(request.params.id);
   const { type } = request.body as { type: string };
 
+  // if (!(await Games.validateTurn(gameId, userId))) {
+  //   response.status(402).json({ error: "Not your turn" });
+  //   return;
+  // }
+
   await Games.playCard(gameId, userId, type);
   await broadcastGameState(gameId, await Games.state(gameId));
   response.json({ ok: true });
@@ -145,6 +150,26 @@ router.post("/:id/shuffle", async (request, response) => {
   const gameId = parseInt(request.params.id);
   await Games.shuffleDeck(gameId);
   response.json({ ok: true });
+});
+
+router.post("/:id/steal", async (request, response) => {
+  const userId = request.session.user?.id;
+  if (!userId) {
+    response.status(401).json({ error: "Not authenticated" });
+    return;
+  }
+
+  const gameId = parseInt(request.params.id);
+  const { fromUserId, index } = request.body as { fromUserId: number; index: number };
+
+  const card = await Games.stealCard(gameId, fromUserId, userId, index);
+  if (!card) {
+    response.status(400).json({ error: "No cards to steal" });
+    return;
+  }
+
+  await broadcastGameState(gameId, await Games.state(gameId));
+  response.json({ card });
 });
 
 export default router;
