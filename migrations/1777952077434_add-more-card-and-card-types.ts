@@ -4,9 +4,8 @@ export async function up(pgm: MigrationBuilder): Promise<void> {
   pgm.sql(`
         INSERT INTO card_types (card_type) VALUES
             ('FAVOR'),
-            ('NOPE'),
-        ON CONFLICT DO NOTHING;
-    `);
+            ('NOPE')
+        ON CONFLICT DO NOTHING;`);
 
   pgm.sql(`
         INSERT INTO cards (id, card_type) VALUES
@@ -19,7 +18,7 @@ export async function up(pgm: MigrationBuilder): Promise<void> {
             (31,  'NOPE'),
             (32,  'NOPE'),
             (33,  'NOPE'),
-            (34,  'NOPE'),
+            (34,  'NOPE')
         ON CONFLICT DO NOTHING;
     `);
 }
