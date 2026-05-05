@@ -64,4 +64,6 @@ export enum CardType {
   SKIP = "SKIP",
   SHUFFLE = "SHUFFLE",
   SEE_THE_FUTURE = "SEE_THE_FUTURE",
+  NOPE = "NOPE",
+  FAVOR = "FAVOR",
 }

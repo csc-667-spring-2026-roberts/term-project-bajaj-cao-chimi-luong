@@ -6,6 +6,8 @@ const CARD_META: Record<CardType, string> = {
   SKIP: "Skip",
   SHUFFLE: "Shuffle",
   SEE_THE_FUTURE: "See the Future",
+  NOPE: "Nope",
+  FAVOR: "Favor",
 };
 
 const CARD_IMAGES: Partial<Record<CardType, string>> = {
@@ -14,6 +16,8 @@ const CARD_IMAGES: Partial<Record<CardType, string>> = {
   SKIP: "/card-sprites/Exploding-Kittens-Skip.webp",
   SHUFFLE: "/card-sprites/Exploding-Kittens-Shuffle.webp",
   SEE_THE_FUTURE: "/card-sprites/Exploding-Kittens-See-The-Future.webp",
+  NOPE: "/card-sprites/Exploding-Kittens-Nope.webp",
+  FAVOR: "/card-sprites/Exploding-Kittens-Favor.webp",
 };
 
 const template = document.querySelector<HTMLTemplateElement>("#player-state-card");
