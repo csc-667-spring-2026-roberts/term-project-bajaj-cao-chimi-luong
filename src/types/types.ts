@@ -43,6 +43,7 @@ export interface GameListItem {
 export enum EventTypes {
   games_updated = "games_updated",
   game_state_updated = "game_state_updated",
+  favor_give_card = "favor_give_card",
 }
 
 export interface GameUserState extends Pick<User, "email" | "gravatar_url"> {
@@ -64,5 +65,6 @@ export enum CardType {
   SKIP = "SKIP",
   SHUFFLE = "SHUFFLE",
   SEE_THE_FUTURE = "SEE_THE_FUTURE",
-  STEAL = "STEAL",
+  NOPE = "NOPE",
+  FAVOR = "FAVOR",
 }

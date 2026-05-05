@@ -279,6 +279,55 @@ const stealCard = async (
   );
 };
 
+const giveCard = async (
+  gameId: number,
+  fromUserId: number,
+  toUserId: number,
+  cardId: number,
+): Promise<void> => {
+  await db.none(
+    `UPDATE game_cards SET user_id=$2
+     WHERE game_id=$1 AND user_id=$3 AND card_id=$4 AND location='hand'`,
+    [gameId, toUserId, fromUserId, cardId],
+  );
+};
+
+const createPendingAction = async (
+  gameId: number,
+  chooseWhat: string,
+  decisionNeededFrom: number,
+  initiatingReason: string,
+  initiatedByUser: number,
+): Promise<void> => {
+  await db.none(
+    `INSERT INTO actions_pending_resolution 
+     (game_id, choose_what, decision_needed_from, initiating_reason, initiated_by_user)
+     VALUES ($1, $2, $3, $4, $5)`,
+    [gameId, chooseWhat, decisionNeededFrom, initiatingReason, initiatedByUser],
+  );
+};
+
+const updatePendingAction = async (
+  gameId: number,
+  initiatingReason: string,
+  chooseWhat: string,
+  decisionNeededFrom: number,
+): Promise<void> => {
+  await db.none(
+    `UPDATE actions_pending_resolution 
+     SET choose_what=$3, decision_needed_from=$4
+     WHERE game_id=$1 AND initiating_reason=$2`,
+    [gameId, initiatingReason, chooseWhat, decisionNeededFrom],
+  );
+};
+
+const deletePendingAction = async (gameId: number, initiatingReason: string): Promise<void> => {
+  await db.none(
+    `DELETE FROM actions_pending_resolution WHERE game_id=$1 AND initiating_reason=$2`,
+    [gameId, initiatingReason],
+  );
+};
+
 export default {
   create,
   list,
@@ -296,4 +345,8 @@ export default {
   validateTurn,
   advanceTurn,
   stealCard,
+  giveCard,
+  createPendingAction,
+  deletePendingAction,
+  updatePendingAction,
 };

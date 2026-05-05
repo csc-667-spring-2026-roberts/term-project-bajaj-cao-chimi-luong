@@ -114,6 +114,11 @@ router.post("/:id/play", async (request, response) => {
   // }
 
   await Games.playCard(gameId, userId, type);
+
+  if (type === "FAVOR") {
+    await Games.createPendingAction(gameId, "OPPONENT", userId, "FAVOR", userId);
+  }
+
   await broadcastGameState(gameId, await Games.state(gameId));
   response.json({ ok: true });
 });
@@ -186,6 +191,42 @@ router.post("/:id/steal", async (request, response) => {
 
   await broadcastGameState(gameId, await Games.state(gameId));
   response.json({ card });
+});
+
+router.post("/:id/favor/choose", async (request, response) => {
+  const userId = request.session.user?.id;
+  if (!userId) {
+    response.status(401).json({ error: "Not authenticated" });
+    return;
+  }
+
+  const gameId = parseInt(request.params.id);
+  const { opponentId } = request.body as { opponentId: number };
+
+  await Games.updatePendingAction(gameId, "FAVOR", "CARD", opponentId);
+
+  SSE.broadcastToGameUser(gameId, opponentId, {
+    type: EventTypes.favor_give_card,
+    fromUserId: userId,
+  });
+
+  response.json({ ok: true });
+});
+
+router.post("/:id/favor/give", async (request, response) => {
+  const userId = request.session.user?.id;
+  if (!userId) {
+    response.status(401).json({ error: "Not authenticated" });
+    return;
+  }
+
+  const gameId = parseInt(request.params.id);
+  const { toUserId, cardId } = request.body as { toUserId: number; cardId: number };
+
+  await Games.giveCard(gameId, userId, toUserId, cardId);
+  await Games.deletePendingAction(gameId, "FAVOR");
+  await broadcastGameState(gameId, await Games.state(gameId));
+  response.json({ ok: true });
 });
 
 export default router;

@@ -6,7 +6,8 @@ const CARD_META: Record<CardType, string> = {
   SKIP: "Skip",
   SHUFFLE: "Shuffle",
   SEE_THE_FUTURE: "See the Future",
-  STEAL: "Steal",
+  NOPE: "Nope",
+  FAVOR: "Favor",
 };
 
 const CARD_IMAGES: Partial<Record<CardType, string>> = {
@@ -15,7 +16,8 @@ const CARD_IMAGES: Partial<Record<CardType, string>> = {
   SKIP: "/card-sprites/Exploding-Kittens-Skip.webp",
   SHUFFLE: "/card-sprites/Exploding-Kittens-Shuffle.webp",
   SEE_THE_FUTURE: "/card-sprites/Exploding-Kittens-See-The-Future.webp",
-  STEAL: "/card-sprites/Exploding-Kittens-Favor.webp",
+  NOPE: "/card-sprites/Exploding-Kittens-Nope.webp",
+  FAVOR: "/card-sprites/Exploding-Kittens-Favor.webp",
 };
 
 const template = document.querySelector<HTMLTemplateElement>("#player-state-card");
@@ -196,42 +198,98 @@ if (discardZone) {
   });
 }
 
-function triggerSteal(): void {
-  myHand?.querySelectorAll<HTMLElement>(".card-wrapper").forEach((c) => {
-    c.draggable = false;
-  });
-  setStatus("Choose a player to steal from!");
-  showPlayerPicker();
+// function triggerSteal(): void {
+//   myHand?.querySelectorAll<HTMLElement>(".card-wrapper").forEach((c) => {
+//     c.draggable = false;
+//   });
+//   setStatus("Choose a player to steal from!");
+//   showPlayerPicker();
+// }
+
+// function showStealPicker(count: number, fromUserId: number): void {
+//   const picker = document.createElement("div");
+//   picker.id = "steal-picker";
+//   picker.innerHTML = `<div class="steal-title">Choose a card to steal</div>`;
+//   const cardRow = document.createElement("div");
+//   cardRow.className = "steal-card-row";
+
+//   for (let i = 0; i < count; i++) {
+//     const card = document.createElement("div");
+//     card.className = "card-wrapper steal-option";
+//     card.innerHTML = `<div class="card-face card-back-face"><div class="card-back-layer" style="position:relative;top:0;left:0;"></div></div>`;
+//     card.addEventListener("click", () => void confirmSteal(i, picker, fromUserId));
+//     cardRow.appendChild(card);
+//   }
+
+//   picker.appendChild(cardRow);
+//   document.body.appendChild(picker);
+// }
+
+// function showPlayerPicker(): void {
+//   const picker = document.createElement("div");
+//   picker.id = "steal-picker";
+//   picker.innerHTML = `<div class="steal-title">Choose a player to steal from</div>`;
+
+//   const playerRow = document.createElement("div");
+//   playerRow.className = "steal-card-row";
+
+//   // for each opponent add a button
+//   const opponents = document.querySelectorAll<HTMLElement>("#opponent-info .player-state");
+//   opponents.forEach((opponent) => {
+//     const email = opponent.querySelector<HTMLElement>(".player-email")?.textContent ?? "Opponent";
+//     const btn = document.createElement("button");
+//     btn.className = "steal-player-btn";
+//     btn.textContent = email;
+//     btn.addEventListener("click", () => {
+//       picker.remove();
+//       const countEl = opponent.querySelector<HTMLElement>(".player-card-count span");
+//       const count = parseInt(countEl?.textContent ?? "0");
+//       showStealPicker(count, opponentUserId ?? 0);
+//     });
+//     playerRow.appendChild(btn);
+//   });
+
+//   picker.appendChild(playerRow);
+//   document.body.appendChild(picker);
+// }
+
+// async function confirmSteal(index: number, picker: HTMLElement, fromUserId: number): Promise<void> {
+//   picker.remove();
+//   const res = await fetch(`/api/games/${gameId}/steal`, {
+//     method: "POST",
+//     headers: { "Content-Type": "application/json" },
+//     body: JSON.stringify({ fromUserId, index }),
+//   });
+
+//   if (!res.ok) {
+//     setStatus("Steal failed");
+//     return;
+//   }
+
+//   const { card } = (await res.json()) as { card: { type: CardType; id: number } };
+
+//   myHand?.querySelectorAll<HTMLElement>(".card-wrapper").forEach((c) => {
+//     c.draggable = true;
+//   });
+
+//   renderedCards.add(card.id);
+//   const el = makeCardEl(card.type, card.id);
+//   myHand?.appendChild(el);
+//   setStatus(`Stole a ${CARD_META[card.type]}!`);
+// }
+
+function triggerFavor(): void {
+  showFavorOpponentPicker();
 }
 
-function showStealPicker(count: number, fromUserId: number): void {
+function showFavorOpponentPicker(): void {
   const picker = document.createElement("div");
   picker.id = "steal-picker";
-  picker.innerHTML = `<div class="steal-title">Choose a card to steal</div>`;
-  const cardRow = document.createElement("div");
-  cardRow.className = "steal-card-row";
-
-  for (let i = 0; i < count; i++) {
-    const card = document.createElement("div");
-    card.className = "card-wrapper steal-option";
-    card.innerHTML = `<div class="card-face card-back-face"><div class="card-back-layer" style="position:relative;top:0;left:0;"></div></div>`;
-    card.addEventListener("click", () => void confirmSteal(i, picker, fromUserId));
-    cardRow.appendChild(card);
-  }
-
-  picker.appendChild(cardRow);
-  document.body.appendChild(picker);
-}
-
-function showPlayerPicker(): void {
-  const picker = document.createElement("div");
-  picker.id = "steal-picker";
-  picker.innerHTML = `<div class="steal-title">Choose a player to steal from</div>`;
+  picker.innerHTML = `<div class="steal-title">Choose a player to request a card from</div>`;
 
   const playerRow = document.createElement("div");
   playerRow.className = "steal-card-row";
 
-  // for each opponent add a button
   const opponents = document.querySelectorAll<HTMLElement>("#opponent-info .player-state");
   opponents.forEach((opponent) => {
     const email = opponent.querySelector<HTMLElement>(".player-email")?.textContent ?? "Opponent";
@@ -240,9 +298,7 @@ function showPlayerPicker(): void {
     btn.textContent = email;
     btn.addEventListener("click", () => {
       picker.remove();
-      const countEl = opponent.querySelector<HTMLElement>(".player-card-count span");
-      const count = parseInt(countEl?.textContent ?? "0");
-      showStealPicker(count, opponentUserId ?? 0);
+      void chooseFavorOpponent(opponentUserId ?? 0);
     });
     playerRow.appendChild(btn);
   });
@@ -251,30 +307,45 @@ function showPlayerPicker(): void {
   document.body.appendChild(picker);
 }
 
-async function confirmSteal(index: number, picker: HTMLElement, fromUserId: number): Promise<void> {
-  picker.remove();
-  const res = await fetch(`/api/games/${gameId}/steal`, {
+async function chooseFavorOpponent(opponentId: number): Promise<void> {
+  await fetch(`/api/games/${gameId}/favor/choose`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ fromUserId, index }),
+    body: JSON.stringify({ opponentId }),
   });
-
-  if (!res.ok) {
-    setStatus("Steal failed");
-    return;
-  }
-
-  const { card } = (await res.json()) as { card: { type: CardType; id: number } };
-
-  myHand?.querySelectorAll<HTMLElement>(".card-wrapper").forEach((c) => {
-    c.draggable = true;
-  });
-
-  renderedCards.add(card.id);
-  const el = makeCardEl(card.type, card.id);
-  myHand?.appendChild(el);
-  setStatus(`Stole a ${CARD_META[card.type]}!`);
+  setStatus("Waiting for opponent to give a card...");
 }
+
+function showFavorPicker(toUserId: number): void {
+  const picker = document.createElement("div");
+  picker.id = "steal-picker";
+  picker.innerHTML = `<div class="steal-title">Choose a card to give</div>`;
+
+  const cardRow = document.createElement("div");
+  cardRow.className = "steal-card-row";
+
+  myHand?.querySelectorAll<HTMLElement>(".card-wrapper").forEach((wrapper) => {
+    const cardType = wrapper.dataset.cardType as CardType;
+    const cardId = parseInt(wrapper.dataset.cardId ?? "0");
+    const clone = makeCardEl(cardType, cardId, false);
+    clone.addEventListener("click", () => void giveFavorCard(cardId, toUserId, picker));
+    cardRow.appendChild(clone);
+  });
+
+  picker.appendChild(cardRow);
+  document.body.appendChild(picker);
+}
+
+async function giveFavorCard(cardId: number, toUserId: number, picker: HTMLElement): Promise<void> {
+  picker.remove();
+  await fetch(`/api/games/${gameId}/favor/give`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ toUserId, cardId }),
+  });
+  setStatus("Card given!");
+}
+
 async function playCard(type: CardType): Promise<void> {
   const card = myHand?.querySelector<HTMLElement>(`[data-card-type="${type}"]`);
   const cardId = parseInt(card?.dataset.cardId ?? "0");
@@ -297,8 +368,8 @@ async function playCard(type: CardType): Promise<void> {
     discardZone.appendChild(discardEl);
   }
 
-  if (type === CardType.STEAL) {
-    triggerSteal();
+  if (type === CardType.FAVOR) {
+    triggerFavor();
   }
 }
 
@@ -323,8 +394,15 @@ source.onopen = (): void => {
   void loadState();
 };
 source.onmessage = (event: MessageEvent<string>): void => {
-  const data = JSON.parse(event.data) as { type: EventTypes; state?: GameState };
+  const data = JSON.parse(event.data) as {
+    type: EventTypes;
+    state?: GameState;
+    fromUserId?: number;
+  };
   if (data.type === EventTypes.game_state_updated && data.state) {
     renderState(data.state);
+  }
+  if (data.type === EventTypes.favor_give_card && data.fromUserId) {
+    showFavorPicker(data.fromUserId);
   }
 };
