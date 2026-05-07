@@ -67,3 +67,11 @@ export enum CardType {
   NOPE = "NOPE",
   FAVOR = "FAVOR",
 }
+
+export interface PendingAction {
+  game_id: number;
+  choose_what: string;
+  decision_needed_from: number;
+  initiating_reason: string;
+  initiated_by_user: number;
+}

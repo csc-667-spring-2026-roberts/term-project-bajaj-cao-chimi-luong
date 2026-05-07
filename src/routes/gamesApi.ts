@@ -114,6 +114,7 @@ router.post("/:id/play", async (request, response) => {
   }
 
   await Games.playCard(gameId, userId, type);
+  await Games.updateCardPositions(gameId);
   await broadcastGameState(gameId, await Games.state(gameId));
   response.json({ ok: true });
 });
@@ -156,6 +157,7 @@ router.post("/:id/draw", async (request, response) => {
     response.status(400).json({ error: "No cards left" });
     return;
   }
+  await Games.updateCardPositions(gameId);
   await Games.advanceTurn(gameId);
   await broadcastGameState(gameId, await Games.state(gameId));
   response.json({ card });
@@ -168,4 +170,82 @@ router.post("/:id/shuffle", async (request, response) => {
   response.json({ ok: true });
 });
 
+router.post("/:id/choose_card", async (request, response) => {
+  const gameId = parseInt(request.params.id);
+  const userId = request.session.user?.id;
+  const { cardId } = request.body as { cardId: number };
+  //validate userId exists authenticated
+  if (!userId) {
+    response.status(401).json({ error: "Not authenticated" });
+    return;
+  }
+  //validate user is the correct player to call
+  if (!(await Games.validateActionResolution(gameId, userId))) {
+    response.status(401).json({ error: "Not your turn" });
+    return;
+  }
+
+  //validate pending action is calling for a card choice
+  if ((await Games.validateChoiceType(gameId)) !== "CARD") {
+    response.status(401).json({ error: "Action does not require a card choice" });
+    return;
+  }
+
+  //validate user has the card being chosen
+  if (!(await Games.validateCardInHand(gameId, userId, cardId))) {
+    response.status(401).json({ error: "Card doesn't exist in hand" });
+    return;
+  }
+
+  //Give the card to the new user (FAVOR)
+  const newUserId = await Games.getInitiatingUser(gameId);
+  await Games.giveCardTo(gameId, cardId, newUserId);
+
+  //Remove Pending Action
+  await Games.resolvePendingAction(gameId);
+  response.json({ ok: true });
+});
+
+router.post("/:id/choose_opponent", async (request, response) => {
+  const gameId = parseInt(request.params.id);
+  const userId = request.session.user?.id;
+  const { opponentId } = request.body as { opponentId: number };
+  //validate userId exists authenticated
+  if (!userId) {
+    response.status(401).json({ error: "Not authenticated" });
+    return;
+  }
+  //validate user is the correct user to resolve current pending Resolution
+  if (!(await Games.validateActionResolution(gameId, userId))) {
+    response.status(401).json({ error: "Not your turn" });
+    return;
+  }
+
+  //validate that OpponentId is valid choice
+  if (!(await Games.validateChosenOpponent(gameId, userId, opponentId))) {
+    response.status(401).json({ error: "Not a valid opponent" });
+  }
+
+  //SET new pending action accordingly
+  const pendingAction = await Games.getPendingAction(gameId);
+
+  //FAVOR
+  if (pendingAction.initiating_reason == "FAVOR") {
+    await Games.setPendingAction(
+      gameId,
+      "CARD",
+      opponentId,
+      pendingAction.initiating_reason,
+      pendingAction.initiated_by_user,
+    );
+  }
+
+  //SLAP
+  if (pendingAction.initiating_reason == "SLAP") {
+    await Games.setCurrentPlayer(gameId, userId);
+    await Games.resolvePendingAction(gameId);
+  }
+
+  response.json({ ok: true });
+});
 export default router;

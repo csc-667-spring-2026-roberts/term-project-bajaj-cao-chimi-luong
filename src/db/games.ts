@@ -1,4 +1,4 @@
-import { Game, GameListItem, GameUserState } from "../types/types.js";
+import { Game, GameListItem, GameUserState, PendingAction } from "../types/types.js";
 import db from "./connection.js";
 
 const create = async (user_id: number): Promise<Game> => {
@@ -52,13 +52,34 @@ const join = async (gameId: number, userId: number): Promise<void> => {
 };
 
 const deal = async (gameId: number): Promise<void> => {
+  //SELECTING PLAYERS IN GAME ID
   const players = await db.many<{ user_id: number }>(
     "SELECT user_id FROM game_users WHERE game_id=$1",
     [gameId],
   );
+  //PLAYER COUNT
   const playerCount = players.length;
 
-  // give each player 1 defuse — fix: set location = 'hand'
+  //TOTAL COUNT DEFUSES IN DECK
+  const defuseCount = await db.one<{ count: number }>(
+    `SELECT COUNT(*)::int AS count FROM game_cards JOIN cards ON cards.id = game_cards.card_id WHERE game_cards.game_id = $1 AND cards.card_type = 'DEFUSE'`,
+    [gameId],
+  );
+  //DEFUSES TO REMOVE
+  const defuseRemoveCount = defuseCount.count - playerCount - 2;
+  //REMOVE EXTRA DEFUSE
+  await db.none(
+    `UPDATE game_cards SET location = 'removed'
+   WHERE game_id = $1 AND card_id IN (
+     SELECT game_cards.card_id FROM game_cards
+     JOIN cards ON cards.id = game_cards.card_id
+     WHERE game_cards.game_id = $1 AND cards.card_type = 'DEFUSE' AND game_cards.location = 'deck'
+     LIMIT $2
+   )`,
+    [gameId, defuseRemoveCount],
+  );
+
+  // give each player 1 defuse
   for (const player of players) {
     await db.none(
       `UPDATE game_cards SET user_id=$1, location='hand'
@@ -72,49 +93,64 @@ const deal = async (gameId: number): Promise<void> => {
     );
   }
 
-  // keep min(2, remaining) defuses in deck, remove the rest
-  // fix: filter by location='deck' instead of user_id IS NULL
-  await db.none(
-    `UPDATE game_cards SET location='removed', user_id=NULL
-     WHERE game_id=$1 AND card_id IN (
-       SELECT gc.card_id FROM game_cards gc
-       JOIN cards c ON c.id = gc.card_id
-       WHERE gc.game_id=$1 AND gc.location='deck' AND c.card_type='DEFUSE'
-       ORDER BY random()
-       OFFSET LEAST(2, 6 - $2)
-     )`,
-    [gameId, playerCount],
-  );
-
-  // deal 7 random non-EK non-defuse cards to each player
-  // fix: filter by location='deck' instead of user_id IS NULL
+  // give each player 4 random non-EK non-DEFUSE cards from deck
   for (const player of players) {
     await db.none(
       `UPDATE game_cards SET user_id=$1, location='hand'
        WHERE game_id=$2 AND card_id IN (
          SELECT gc.card_id FROM game_cards gc
-                                  JOIN cards c ON c.id = gc.card_id
+         JOIN cards c ON c.id = gc.card_id
          WHERE gc.game_id=$2 AND gc.location='deck'
-           AND c.card_type NOT IN ('EXPLODING_KITTEN', 'DEFUSE')
+         AND c.card_type NOT IN ('EXPLODING_KITTEN', 'DEFUSE')
          ORDER BY random()
-         LIMIT 7
-         )`,
+         LIMIT 4
+       )`,
       [player.user_id, gameId],
     );
   }
 
-  // put (playerCount - 1) exploding kittens in deck, remove the rest
-  // fix: filter by location='deck' instead of user_id IS NULL
+  // remove extra exploding kittens, keep (playerCount - 1)
   await db.none(
-    `UPDATE game_cards SET location='removed', user_id=NULL
+    `UPDATE game_cards SET location='removed'
      WHERE game_id=$1 AND card_id IN (
        SELECT gc.card_id FROM game_cards gc
-                                JOIN cards c ON c.id = gc.card_id
+       JOIN cards c ON c.id = gc.card_id
        WHERE gc.game_id=$1 AND gc.location='deck' AND c.card_type='EXPLODING_KITTEN'
        ORDER BY random()
        OFFSET ($2 - 1)
-       )`,
+     )`,
     [gameId, playerCount],
+  );
+
+  //set up deck position
+  await updateCardPositions(gameId);
+};
+
+const updateCardPositions = async (gameId: number): Promise<void> => {
+  // reorder deck and discard globally
+  for (const location of ["deck", "discard"]) {
+    await db.none(
+      `UPDATE game_cards SET position = sub.new_pos
+        FROM (
+         SELECT card_id, ROW_NUMBER() OVER (ORDER BY position ASC) - 1 AS new_pos
+         FROM game_cards
+         WHERE game_id = $1 AND location = $2
+        ) sub
+       WHERE game_cards.game_id = $1 AND game_cards.card_id = sub.card_id`,
+      [gameId, location],
+    );
+  }
+
+  // reorder hand per player
+  await db.none(
+    `UPDATE game_cards SET position = sub.new_pos
+     FROM (
+       SELECT card_id, ROW_NUMBER() OVER (PARTITION BY user_id ORDER BY position ASC) - 1 AS new_pos
+       FROM game_cards
+       WHERE game_id = $1 AND location = 'hand'
+     ) sub
+     WHERE game_cards.game_id = $1 AND game_cards.card_id = sub.card_id`,
+    [gameId],
   );
 };
 
@@ -162,6 +198,40 @@ const validateTurn = async (gameId: number, userId: number): Promise<boolean> =>
   return result !== null;
 };
 
+const validateActionResolution = async (gameId: number, userId: number): Promise<boolean> => {
+  const result: { [key: string]: never } | null = await db.oneOrNone(
+    `SELECT 1 FROM actions_pending_resolution WHERE game_id = $1 AND decision_needed_from = $2`,
+    [gameId, userId],
+  );
+  return result !== null;
+};
+
+const validateCardInHand = async (
+  gameId: number,
+  userId: number,
+  cardId: number,
+): Promise<boolean> => {
+  const result: { [key: string]: never } | null = await db.oneOrNone(
+    `SELECT 1 FROM game_cards WHERE game_id = $1 AND user_id = $2 AND card_id = $3 AND location = 'hand'`,
+    [gameId, userId, cardId],
+  );
+  return result !== null;
+};
+
+const validateChosenOpponent = async (
+  gameId: number,
+  userId: number,
+  opponentId: number,
+): Promise<boolean> => {
+  if (userId === opponentId) return false;
+
+  const result = await db.oneOrNone<{ [key: string]: never }>(
+    `SELECT 1 FROM game_users WHERE game_id = $1 AND user_id = $2 AND is_alive = true`,
+    [gameId, opponentId],
+  );
+  return result !== null;
+};
+
 const state = async (gameId: number): Promise<GameUserState[]> =>
   db.many<GameUserState>(GAME_STATE_SQL, [gameId]);
 
@@ -179,6 +249,14 @@ const drawCard = async (gameId: number, userId: number): Promise<{ type: string 
        RETURNING (SELECT c.card_type FROM cards c WHERE c.id = card_id)`,
     [gameId, userId],
   );
+};
+
+const giveCardTo = async (gameId: number, cardId: number, userId: number): Promise<void> => {
+  await db.none(`UPDATE game_cards SET user_id = $3 WHERE game_id = $1 AND card_id = $2`, [
+    gameId,
+    cardId,
+    userId,
+  ]);
 };
 
 const shuffleDeck = async (gameId: number): Promise<void> => {
@@ -228,6 +306,14 @@ const playCard = async (gameId: number, userId: number, type: string): Promise<v
   );
 };
 
+const getInitiatingUser = async (gameId: number): Promise<number> => {
+  const result = await db.one<{ initiated_by_user: number }>(
+    `SELECT initiated_by_user FROM actions_pending_resolution WHERE game_id = $1`,
+    [gameId],
+  );
+  return result.initiated_by_user;
+};
+
 const getDiscard = async (gameId: number): Promise<{ type: string } | null> => {
   return db.oneOrNone<{ type: string }>(
     `SELECT c.card_type FROM game_cards gc
@@ -258,6 +344,52 @@ const advanceTurn = async (gameId: number): Promise<void> => {
   );
 };
 
+const getPendingAction = async (gameId: number): Promise<PendingAction> => {
+  return db.one<PendingAction>(`SELECT * FROM actions_pending_resolution WHERE game_id = $1`, [
+    gameId,
+  ]);
+};
+
+const setPendingAction = async (
+  gameId: number,
+  chooseWhat: string,
+  decisionNeededFrom: number,
+  initiatingReason: string,
+  initiatedByUser: number,
+): Promise<void> => {
+  await db.none(
+    `INSERT INTO actions_pending_resolution (game_id, choose_what, decision_needed_from, initiating_reason, initiated_by_user)
+     VALUES ($1, $2, $3, $4, $5)
+     ON CONFLICT (game_id) DO UPDATE
+       SET choose_what = EXCLUDED.choose_what,
+           decision_needed_from = EXCLUDED.decision_needed_from,
+           initiating_reason = EXCLUDED.initiating_reason,
+           initiated_by_user = EXCLUDED.initiated_by_user`,
+    [gameId, chooseWhat, decisionNeededFrom, initiatingReason, initiatedByUser],
+  );
+};
+
+const resolvePendingAction = async (gameId: number): Promise<void> => {
+  await db.none(`DELETE FROM actions_pending_resolution WHERE game_id = $1`, [gameId]);
+};
+
+const validateChoiceType = async (gameId: number): Promise<string> => {
+  const result = await db.one<{ choose_what: string }>(
+    `SELECT choose_what FROM actions_pending_resolution WHERE game_id = $1`,
+    [gameId],
+  );
+  return result.choose_what;
+};
+
+const setCurrentPlayer = async (gameId: number, userId: number): Promise<void> => {
+  await db.none(
+    `UPDATE games SET current_seat_turn = (
+       SELECT seat_position FROM game_users WHERE game_id = $1 AND user_id = $2
+     ) WHERE id = $1`,
+    [gameId, userId],
+  );
+};
+
 export default {
   create,
   list,
@@ -273,5 +405,16 @@ export default {
   playCard,
   getDiscard,
   validateTurn,
+  validateActionResolution,
+  validateCardInHand,
   advanceTurn,
+  giveCardTo,
+  getInitiatingUser,
+  resolvePendingAction,
+  validateChosenOpponent,
+  validateChoiceType,
+  getPendingAction,
+  setPendingAction,
+  setCurrentPlayer,
+  updateCardPositions,
 };
