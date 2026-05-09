@@ -106,14 +106,39 @@ router.post("/:id/play", async (request, response) => {
   }
   //parse the request: game id
   const gameId = parseInt(request.params.id);
-  const { type } = request.body as { type: string };
+  const { cardId } = request.body as { cardId: number };
 
   if (!(await Games.validateTurn(gameId, userId))) {
     response.status(402).json({ error: "Not your turn" });
     return;
   }
+  if (!(await Games.validateCardInHand(gameId, userId, cardId))) {
+    response.status(402).json({ error: "Not a card in hand" });
+    return;
+  }
 
-  await Games.playCard(gameId, userId, type);
+  const card_type = await Games.getCardType(cardId);
+
+  //SKIP
+  if (card_type == "SKIP") {
+    const turns_left = await Games.getTurnsLeft(gameId);
+    if (turns_left == 1) await Games.advanceTurn(gameId);
+    else await Games.decrementTurnsLeft(gameId);
+  }
+  //ATTACK
+  if (card_type == "ATTACK") {
+    await Games.setTurnsLeft(gameId, 2);
+    await Games.advanceTurn(gameId);
+  }
+  //FAVOR
+  if (card_type == "FAVOR") {
+    await Games.setPendingAction(gameId, "OPPONENT", userId, "FAVOR", userId);
+  }
+  if (card_type == "SEE_THE_FUTURE") {
+    await Games.setPendingAction(gameId, "SEE_THE_FUTURE", userId, "SEE_THE_FUTURE", userId);
+  }
+
+  await Games.playCard(gameId, cardId);
   await Games.updateCardPositions(gameId);
   await broadcastGameState(gameId, await Games.state(gameId));
   response.json({ ok: true });
@@ -135,6 +160,7 @@ const broadcastGameState = async (gameId: number, players: GameUserState[]): Pro
         whoami: value.user_id,
         players,
         deck_count,
+        pending_action: Games.getPendingAction(gameId),
       },
     });
   });
@@ -228,7 +254,10 @@ router.post("/:id/choose_opponent", async (request, response) => {
 
   //SET new pending action accordingly
   const pendingAction = await Games.getPendingAction(gameId);
-
+  if (!pendingAction) {
+    response.status(401).json({ error: "Not a valid pending action" });
+    return;
+  }
   //FAVOR
   if (pendingAction.initiating_reason == "FAVOR") {
     await Games.setPendingAction(

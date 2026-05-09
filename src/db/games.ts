@@ -235,6 +235,25 @@ const validateChosenOpponent = async (
 const state = async (gameId: number): Promise<GameUserState[]> =>
   db.many<GameUserState>(GAME_STATE_SQL, [gameId]);
 
+const getCardType = async (cardId: number): Promise<string> => {
+  const result = await db.one<{ card_type: string }>(`SELECT card_type FROM cards WHERE id = $1`, [
+    cardId,
+  ]);
+  return result.card_type;
+};
+
+const getTurnsLeft = async (gameId: number): Promise<number> => {
+  const result = await db.one<{ turns_left: number }>(
+    `SELECT turns_left FROM games WHERE id = $1`,
+    [gameId],
+  );
+  return result.turns_left;
+};
+
+const decrementTurnsLeft = async (gameId: number): Promise<void> => {
+  await db.none(`UPDATE games SET turns_left = turns_left - 1 WHERE id = $1`, [gameId]);
+};
+
 const drawCard = async (gameId: number, userId: number): Promise<{ type: string } | null> => {
   return db.oneOrNone<{ type: string }>(
     `UPDATE game_cards
@@ -292,17 +311,11 @@ const getHand = async (gameId: number, userId: number): Promise<{ type: string; 
   );
 };
 
-const playCard = async (gameId: number, userId: number, type: string): Promise<void> => {
+const playCard = async (gameId: number, cardId: number): Promise<void> => {
   await db.none(
     `UPDATE game_cards SET location = 'discard', user_id = NULL
-     WHERE game_id = $1 AND user_id = $2
-       AND card_id = (
-       SELECT gc.card_id FROM game_cards gc
-                                JOIN cards c ON c.id = gc.card_id
-       WHERE gc.game_id = $1 AND gc.location = 'hand' AND gc.user_id = $2 AND c.card_type = $3
-       LIMIT 1
-       )`,
-    [gameId, userId, type],
+     WHERE game_id = $1 AND card_id = $2 AND location = 'hand'`,
+    [gameId, cardId],
   );
 };
 
@@ -344,10 +357,11 @@ const advanceTurn = async (gameId: number): Promise<void> => {
   );
 };
 
-const getPendingAction = async (gameId: number): Promise<PendingAction> => {
-  return db.one<PendingAction>(`SELECT * FROM actions_pending_resolution WHERE game_id = $1`, [
-    gameId,
-  ]);
+const getPendingAction = async (gameId: number): Promise<PendingAction | null> => {
+  return db.oneOrNone<PendingAction>(
+    `SELECT * FROM actions_pending_resolution WHERE game_id = $1`,
+    [gameId],
+  );
 };
 
 const setPendingAction = async (
@@ -390,6 +404,10 @@ const setCurrentPlayer = async (gameId: number, userId: number): Promise<void> =
   );
 };
 
+const setTurnsLeft = async (gameId: number, amount: number): Promise<void> => {
+  await db.none(`UPDATE games SET turns_left = $2 WHERE id = $1`, [gameId, amount]);
+};
+
 export default {
   create,
   list,
@@ -417,4 +435,8 @@ export default {
   setPendingAction,
   setCurrentPlayer,
   updateCardPositions,
+  getCardType,
+  getTurnsLeft,
+  decrementTurnsLeft,
+  setTurnsLeft,
 };
