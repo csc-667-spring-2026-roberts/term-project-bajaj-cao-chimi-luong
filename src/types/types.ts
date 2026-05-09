@@ -43,6 +43,7 @@ export interface GameListItem {
 export enum EventTypes {
   games_updated = "games_updated",
   game_state_updated = "game_state_updated",
+  pending_actions = "pending_actions",
 }
 
 export interface GameUserState extends Pick<User, "email" | "gravatar_url"> {
@@ -56,6 +57,7 @@ export interface GameState {
   whoami: number;
   players: GameUserState[];
   deck_count: number;
+  pending_action?: PendingAction;
 }
 
 export enum CardType {

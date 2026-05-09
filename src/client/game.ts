@@ -186,7 +186,7 @@ async function playCard(type: CardType): Promise<void> {
   const res = await fetch(`/api/games/${gameId}/play`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ type }),
+    body: JSON.stringify({ cardId: cardId }),
   });
   if (!res.ok) return;
 
@@ -220,6 +220,7 @@ shuffleButton?.addEventListener("click", () => void shuffleDeck());
 
 const source = new EventSource(`/api/sse?gameId=${gameId}`);
 source.onopen = (): void => {
+  console.log("bhbu");
   void loadState();
 };
 source.onmessage = (event: MessageEvent<string>): void => {
