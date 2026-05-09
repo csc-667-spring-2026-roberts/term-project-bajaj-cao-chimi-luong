@@ -408,6 +408,42 @@ const setTurnsLeft = async (gameId: number, amount: number): Promise<void> => {
   await db.none(`UPDATE games SET turns_left = $2 WHERE id = $1`, [gameId, amount]);
 };
 
+const getMessageForActingUser = async (
+  chooseWhat: string,
+  initiatingReason: string,
+): Promise<string> => {
+  const result = await db.one<{ message_for_user_acting: string }>(
+    `SELECT message_for_user_acting FROM messages WHERE choose_what = $1 AND initiating_reason = $2`,
+    [chooseWhat, initiatingReason],
+  );
+  return result.message_for_user_acting;
+};
+
+const getMessageForEveryone = async (
+  chooseWhat: string,
+  initiatingReason: string,
+): Promise<string> => {
+  const result = await db.one<{ message_everyone_else: string }>(
+    `SELECT message_everyone_else FROM messages WHERE choose_what = $1 AND initiating_reason = $2`,
+    [chooseWhat, initiatingReason],
+  );
+  return result.message_everyone_else;
+};
+
+const getUserEmail = async (userId: number): Promise<string> => {
+  const result = await db.one<{ email: string }>(`SELECT email FROM users WHERE id = $1`, [userId]);
+  return result.email;
+};
+const getCurrentPlayer = async (gameId: number): Promise<number> => {
+  const result = await db.one<{ user_id: number }>(
+    `SELECT user_id FROM game_users
+     JOIN games ON games.current_seat_turn = game_users.seat_position
+     WHERE game_users.game_id = $1 AND games.id = $1`,
+    [gameId],
+  );
+  return result.user_id;
+};
+
 export default {
   create,
   list,
@@ -439,4 +475,8 @@ export default {
   getTurnsLeft,
   decrementTurnsLeft,
   setTurnsLeft,
+  getMessageForEveryone,
+  getMessageForActingUser,
+  getUserEmail,
+  getCurrentPlayer,
 };

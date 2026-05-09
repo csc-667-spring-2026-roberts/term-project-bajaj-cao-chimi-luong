@@ -96,6 +96,44 @@ router.get("/:id/validate", async (request, response) => {
   response.json({ ok: true });
 });
 
+router.get("/:id/message", async (request, response) => {
+  const userId = request.session.user?.id;
+  const gameId = parseInt(request.params.id);
+  if (!userId) {
+    response.status(401).json({ error: "Not authenticated" });
+    return;
+  }
+  const pendingActionResult = await Games.getPendingAction(gameId);
+  if (!pendingActionResult) {
+    if (await Games.validateTurn(gameId, userId)) {
+      const message = await Games.getMessageForActingUser("NONE", "NONE");
+      response.json({ message });
+    } else {
+      const messageB = await Games.getMessageForEveryone("NONE", "NONE");
+      const currentPlayer = await Games.getCurrentPlayer(gameId);
+      const messageA = await Games.getUserEmail(currentPlayer);
+      const message = `${messageA} ${messageB}`;
+      response.json({ message });
+    }
+  } else {
+    if (await Games.validateActionResolution(gameId, userId)) {
+      const message = await Games.getMessageForActingUser(
+        pendingActionResult.choose_what,
+        pendingActionResult.initiating_reason,
+      );
+      response.json({ message });
+    } else {
+      const messageA = await Games.getMessageForEveryone(
+        pendingActionResult.choose_what,
+        pendingActionResult.initiating_reason,
+      );
+      const messageB = await Games.getUserEmail(pendingActionResult.decision_needed_from);
+      const message = `${messageA} ${messageB}`;
+      response.json({ message });
+    }
+  }
+});
+
 router.post("/:id/play", async (request, response) => {
   const userId = request.session.user?.id;
 
