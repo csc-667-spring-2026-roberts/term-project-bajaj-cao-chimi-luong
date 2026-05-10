@@ -117,6 +117,17 @@ function renderState(state: GameState): void {
 
   if (drawButton) drawButton.disabled = !opponentState || state.deck_count === 0;
   if (shuffleButton) shuffleButton.disabled = true;
+
+  const pendingAction = state.pending_action;
+  if (pendingAction) {
+    if (pendingAction.choose_what == "CARD" && state.whoami == pendingAction.decision_needed_from)
+      showCardPicker();
+    if (
+      pendingAction.choose_what == "OPPONENT" &&
+      state.whoami == pendingAction.decision_needed_from
+    )
+      showOpponentPicker();
+  }
 }
 
 async function drawCard(): Promise<void> {
@@ -291,18 +302,5 @@ source.onmessage = (event: MessageEvent<string>): void => {
   if (data.type === EventTypes.game_state_updated && data.state) {
     renderState(data.state);
     //check for pending action
-    const pendingAction = data.state.pending_action;
-    if (pendingAction) {
-      if (
-        pendingAction.choose_what == "CARD" &&
-        data.state.whoami == pendingAction.decision_needed_from
-      )
-        showCardPicker();
-      if (
-        pendingAction.choose_what == "OPPONENT" &&
-        data.state.whoami == pendingAction.decision_needed_from
-      )
-        showOpponentPicker();
-    }
   }
 };

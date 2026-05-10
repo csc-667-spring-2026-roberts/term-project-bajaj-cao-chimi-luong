@@ -65,13 +65,14 @@ router.get("/:id/state", async (request, response) => {
   const gameId = parseInt(request.params.id);
   const players = await Games.state(gameId);
   const deckCount = await Games.deckCount(gameId);
-
+  const pendingAction = await Games.getPendingAction(gameId);
   response.json({
     state: {
       id: gameId,
       whoami: userId,
       players,
       deck_count: deckCount,
+      pending_action: pendingAction,
     },
   });
 });
