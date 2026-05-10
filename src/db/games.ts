@@ -284,6 +284,14 @@ const defuseExplodingKitten = async (gameId: number, userId: number): Promise<vo
   );
 };
 
+const onePlayerRemaining = async (gameId: number): Promise<boolean> => {
+  const result = await db.one<{ count: number }>(
+    `SELECT COUNT(*)::int AS count FROM game_users WHERE game_id = $1 AND is_alive = true`,
+    [gameId],
+  );
+  return result.count === 1;
+};
+
 const giveCardTo = async (gameId: number, cardId: number, userId: number): Promise<void> => {
   await db.none(`UPDATE game_cards SET user_id = $3 WHERE game_id = $1 AND card_id = $2`, [
     gameId,
@@ -355,6 +363,16 @@ const advanceTurn = async (gameId: number): Promise<void> => {
         WHERE game_id = $1
           AND is_alive = true)
                              )
+     WHERE id = $1`,
+    [gameId],
+  );
+};
+
+const setWinner = async (gameId: number): Promise<void> => {
+  await db.none(
+    `UPDATE games SET
+       winner_id = (SELECT user_id FROM game_users WHERE game_id = $1 AND is_alive = true LIMIT 1),
+       status = 'FINISHED'
      WHERE id = $1`,
     [gameId],
   );
@@ -541,4 +559,6 @@ export default {
   getTopDiscard,
   getHandCount,
   defuseExplodingKitten,
+  onePlayerRemaining,
+  setWinner,
 };

@@ -417,13 +417,14 @@ router.get("/:id/explode", async (request, response) => {
     await Games.eliminatePlayer(gameId, userId);
     await Games.advanceTurn(gameId);
     await Games.resolvePendingAction(gameId);
+    if (await Games.onePlayerRemaining(gameId)) {
+      await Games.setWinner(gameId);
+    }
+
     await broadcastGameState(gameId, await Games.state(gameId));
     response.json({ ok: true });
-    return;
-    //TODO WIN CHECKER HERE!!
   } else {
     response.status(401).json({ error: "Not a valid exploding" });
-    return;
   }
 });
 export default router;
