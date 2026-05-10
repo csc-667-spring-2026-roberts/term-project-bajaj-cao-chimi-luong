@@ -240,6 +240,8 @@ router.post("/:id/draw", async (request, response) => {
     response.status(400).json({ error: "No cards left" });
     return;
   }
+  if (card.card_type == "EXPLODING_KITTEN")
+    await Games.setPendingAction(gameId, "CARD", userId, "DEFUSE", userId);
   await Games.updateCardPositions(gameId);
   await Games.advanceTurn(gameId);
   await broadcastGameState(gameId, await Games.state(gameId));
@@ -284,8 +286,11 @@ router.post("/:id/choose_card", async (request, response) => {
     if (cardType == "DEFUSE") {
       await Games.resolvePendingAction(gameId);
       await Games.playCard(gameId, cardId);
+      await Games.defuseExplodingKitten(gameId, userId);
+      await Games.shuffleDeck(gameId);
+      await Games.updateCardPositions(gameId);
     } else await Games.playCard(gameId, cardId);
-
+    await Games.updateCardPositions(gameId);
     await broadcastGameState(gameId, await Games.state(gameId));
     response.json({ ok: true });
     return;
@@ -391,7 +396,6 @@ router.get("/:id/acknowledge", async (request, response) => {
   await broadcastGameState(gameId, await Games.state(gameId));
   response.json({ ok: true });
 });
-
 router.get("/:id/explode", async (request, response) => {
   const gameId = parseInt(request.params.id);
   const userId = request.session.user?.id;

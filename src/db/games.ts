@@ -254,8 +254,8 @@ const decrementTurnsLeft = async (gameId: number): Promise<void> => {
   await db.none(`UPDATE games SET turns_left = turns_left - 1 WHERE id = $1`, [gameId]);
 };
 
-const drawCard = async (gameId: number, userId: number): Promise<{ type: string } | null> => {
-  return db.oneOrNone<{ type: string }>(
+const drawCard = async (gameId: number, userId: number): Promise<{ card_type: string } | null> => {
+  return db.oneOrNone<{ card_type: string }>(
     `UPDATE game_cards
      SET user_id = $2, location = 'hand'
      WHERE game_id = $1
@@ -266,6 +266,20 @@ const drawCard = async (gameId: number, userId: number): Promise<{ type: string 
        LIMIT 1
        )
        RETURNING (SELECT c.card_type FROM cards c WHERE c.id = card_id)`,
+    [gameId, userId],
+  );
+};
+
+const defuseExplodingKitten = async (gameId: number, userId: number): Promise<void> => {
+  await db.none(
+    `UPDATE game_cards SET location = 'deck', user_id = NULL
+     WHERE game_id = $1 AND user_id = $2
+       AND card_id = (
+         SELECT gc.card_id FROM game_cards gc
+         JOIN cards c ON c.id = gc.card_id
+         WHERE gc.game_id = $1 AND gc.user_id = $2 AND c.card_type = 'EXPLODING_KITTEN'
+         LIMIT 1
+       )`,
     [gameId, userId],
   );
 };
@@ -526,4 +540,5 @@ export default {
   getTopThreeDeck,
   getTopDiscard,
   getHandCount,
+  defuseExplodingKitten,
 };

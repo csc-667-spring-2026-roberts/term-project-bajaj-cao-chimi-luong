@@ -1,4 +1,4 @@
-import { EventTypes, GameState, GameUserState, CardType } from "../types/types.js";
+import { CardType, EventTypes, GameState, GameUserState } from "../types/types.js";
 
 const CARD_META: Record<CardType, string> = {
   EXPLODING_KITTEN: "Exploding Kitten",
@@ -176,6 +176,7 @@ async function renderHand(gameId: string, _userId: number): Promise<void> {
   let newCardIndex = 0;
   cards.forEach((card) => {
     if (renderedCards.has(card.id)) return;
+    if (card.type == CardType.EXPLODING_KITTEN) return;
     renderedCards.add(card.id);
     const el = makeCardEl(card.type, card.id, false);
     el.style.opacity = "0";
@@ -305,7 +306,7 @@ function showCardPicker(): void {
 function showDefusePicker(): void {
   const picker = document.createElement("div");
   picker.id = "steal-picker";
-  picker.innerHTML = `<div class="steal-title">Choose a defuse</div>`;
+  picker.innerHTML = `<div class="steal-title">You pulled an exploding kitten! Pick a defuse to disarm the kitty</div>`;
 
   const cardRow = document.createElement("div");
   cardRow.className = "steal-card-row";
