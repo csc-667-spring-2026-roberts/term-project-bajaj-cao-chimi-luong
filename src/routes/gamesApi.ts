@@ -292,6 +292,9 @@ router.post("/:id/choose_card", async (request, response) => {
       await Games.defuseExplodingKitten(gameId, userId);
       await Games.shuffleDeck(gameId);
       await Games.updateCardPositions(gameId);
+    } else if (cardType == "EXPLODING_KITTEN") {
+      response.json({ ok: true });
+      return;
     } else await Games.playCard(gameId, cardId);
     await Games.updateCardPositions(gameId);
     await broadcastGameState(gameId, await Games.state(gameId));
