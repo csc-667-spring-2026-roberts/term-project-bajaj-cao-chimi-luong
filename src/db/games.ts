@@ -332,12 +332,14 @@ const advanceTurn = async (gameId: number): Promise<void> => {
        (SELECT MIN(seat_position)
         FROM game_users
         WHERE game_id = $1
+          AND is_alive = true
           AND seat_position > (
           SELECT current_seat_turn FROM games WHERE id = $1
         )),
        (SELECT MIN(seat_position)
         FROM game_users
-        WHERE game_id = $1)
+        WHERE game_id = $1
+          AND is_alive = true)
                              )
      WHERE id = $1`,
     [gameId],
@@ -478,7 +480,15 @@ const getHandCount = async (gameId: number, userId: number): Promise<number> => 
   return result.count;
 };
 
+const eliminatePlayer = async (gameId: number, userId: number): Promise<void> => {
+  await db.none(`UPDATE game_users SET is_alive = false WHERE game_id = $1 AND user_id = $2`, [
+    gameId,
+    userId,
+  ]);
+};
+
 export default {
+  eliminatePlayer,
   create,
   list,
   join,

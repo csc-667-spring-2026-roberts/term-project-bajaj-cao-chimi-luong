@@ -66,6 +66,7 @@ router.get("/:id/state", async (request, response) => {
   const players = await Games.state(gameId);
   const deckCount = await Games.deckCount(gameId);
   const pendingAction = await Games.getPendingAction(gameId);
+  const current = await Games.getCurrentPlayer(gameId);
   response.json({
     state: {
       id: gameId,
@@ -73,6 +74,7 @@ router.get("/:id/state", async (request, response) => {
       players,
       deck_count: deckCount,
       pending_action: pendingAction,
+      current_user_id: current,
     },
   });
 });
@@ -205,6 +207,7 @@ router.post("/:id/state", async (request) => {
 const broadcastGameState = async (gameId: number, players: GameUserState[]): Promise<void> => {
   const deck_count = await Games.deckCount(gameId);
   const pendingAction = await Games.getPendingAction(gameId);
+  const current = await Games.getCurrentPlayer(gameId);
   players.forEach((value) => {
     SSE.broadcastToGameUser(gameId, value.user_id, {
       type: EventTypes.game_state_updated,
@@ -214,6 +217,7 @@ const broadcastGameState = async (gameId: number, players: GameUserState[]): Pro
         players,
         deck_count,
         pending_action: pendingAction,
+        current_user_id: current,
       },
     });
   });
@@ -241,18 +245,18 @@ router.post("/:id/draw", async (request, response) => {
   await broadcastGameState(gameId, await Games.state(gameId));
   response.json({ card });
 });
-
 router.post("/:id/shuffle", async (request, response) => {
   //Redundant api call. Use /play with shuffle card id
   const gameId = parseInt(request.params.id);
   await Games.shuffleDeck(gameId);
   response.json({ ok: true });
 });
-
 router.post("/:id/choose_card", async (request, response) => {
   const gameId = parseInt(request.params.id);
   const userId = request.session.user?.id;
+  const pendingAction = await Games.getPendingAction(gameId);
   const { cardId } = request.body as { cardId: number };
+  const cardType = await Games.getCardType(cardId);
   //validate userId exists authenticated
   if (!userId) {
     response.status(401).json({ error: "Not authenticated" });
@@ -276,6 +280,17 @@ router.post("/:id/choose_card", async (request, response) => {
     return;
   }
 
+  if (pendingAction?.initiating_reason == "DEFUSE") {
+    if (cardType == "DEFUSE") {
+      await Games.resolvePendingAction(gameId);
+      await Games.playCard(gameId, cardId);
+    } else await Games.playCard(gameId, cardId);
+
+    await broadcastGameState(gameId, await Games.state(gameId));
+    response.json({ ok: true });
+    return;
+  }
+
   //Give the card to the new user (FAVOR)
   const newUserId = await Games.getInitiatingUser(gameId);
   await Games.giveCardTo(gameId, cardId, newUserId);
@@ -285,7 +300,6 @@ router.post("/:id/choose_card", async (request, response) => {
   await broadcastGameState(gameId, await Games.state(gameId));
   response.json({ ok: true });
 });
-
 router.post("/:id/choose_opponent", async (request, response) => {
   const gameId = parseInt(request.params.id);
   const userId = request.session.user?.id;
@@ -378,4 +392,34 @@ router.get("/:id/acknowledge", async (request, response) => {
   response.json({ ok: true });
 });
 
+router.get("/:id/explode", async (request, response) => {
+  const gameId = parseInt(request.params.id);
+  const userId = request.session.user?.id;
+  const pendingAction = await Games.getPendingAction(gameId);
+  //validate userId exists authenticated
+  if (!userId) {
+    response.status(401).json({ error: "Not authenticated" });
+    return;
+  }
+  //validate user is the correct player to call
+  if (!(await Games.validateActionResolution(gameId, userId))) {
+    response.status(401).json({ error: "Not your turn" });
+    return;
+  }
+  if (
+    pendingAction?.initiating_reason == "DEFUSE" &&
+    userId == pendingAction.decision_needed_from
+  ) {
+    await Games.eliminatePlayer(gameId, userId);
+    await Games.advanceTurn(gameId);
+    await Games.resolvePendingAction(gameId);
+    await broadcastGameState(gameId, await Games.state(gameId));
+    response.json({ ok: true });
+    return;
+    //TODO WIN CHECKER HERE!!
+  } else {
+    response.status(401).json({ error: "Not a valid exploding" });
+    return;
+  }
+});
 export default router;

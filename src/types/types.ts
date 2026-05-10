@@ -57,6 +57,7 @@ export interface GameState {
   whoami: number;
   players: GameUserState[];
   deck_count: number;
+  current_user_id: number;
   pending_action?: PendingAction;
 }
 

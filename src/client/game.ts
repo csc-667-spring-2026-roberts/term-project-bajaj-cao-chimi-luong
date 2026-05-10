@@ -113,6 +113,7 @@ function renderDeck(count: number): void {
   }
 }
 
+// eslint-disable-next-line complexity
 async function renderState(state: GameState): Promise<void> {
   const meState = state.players.find((p) => p.user_id === state.whoami);
   const opponentState = state.players.find((p) => p.user_id !== state.whoami);
@@ -123,15 +124,19 @@ async function renderState(state: GameState): Promise<void> {
   await setStatus();
 
   renderDeck(state.deck_count);
-  void renderHand(gameId, state.whoami);
+  await renderHand(gameId, state.whoami);
   void renderDiscard();
 
-  if (drawButton) drawButton.disabled = !opponentState || state.deck_count === 0;
-  //if (shuffleButton) shuffleButton.disabled = true;
+  if (drawButton) {
+    drawButton.disabled = !(state.whoami == state.current_user_id && state.deck_count != 0);
+  }
   const pendingAction = state.pending_action;
   if (pendingAction) {
-    console.log(pendingAction.choose_what);
-    if (pendingAction.choose_what == "CARD" && state.whoami == pendingAction.decision_needed_from)
+    if (
+      pendingAction.choose_what == "CARD" &&
+      state.whoami == pendingAction.decision_needed_from &&
+      pendingAction.initiating_reason != "DEFUSE"
+    )
       showCardPicker();
     if (
       pendingAction.choose_what == "OPPONENT" &&
@@ -143,6 +148,12 @@ async function renderState(state: GameState): Promise<void> {
       state.whoami == pendingAction.decision_needed_from
     )
       await showSeeTheFuture();
+    if (
+      pendingAction.choose_what == "CARD" &&
+      pendingAction.initiating_reason == "DEFUSE" &&
+      state.whoami == pendingAction.decision_needed_from
+    )
+      showDefusePicker();
   }
 }
 
@@ -244,7 +255,7 @@ async function renderDiscard(): Promise<void> {
 function showCardPicker(): void {
   const picker = document.createElement("div");
   picker.id = "steal-picker";
-  picker.innerHTML = `<div class="steal-title">Choose a card</div>`;
+  picker.innerHTML = `<div class="steal-title">Choose a card!</div>`;
 
   const cardRow = document.createElement("div");
   cardRow.className = "steal-card-row";
@@ -288,6 +299,40 @@ function showCardPicker(): void {
   });
 
   picker.appendChild(cardRow);
+  document.body.appendChild(picker);
+}
+
+function showDefusePicker(): void {
+  const picker = document.createElement("div");
+  picker.id = "steal-picker";
+  picker.innerHTML = `<div class="steal-title">Choose a defuse</div>`;
+
+  const cardRow = document.createElement("div");
+  cardRow.className = "steal-card-row";
+
+  const wrappers = myHand?.querySelectorAll<HTMLElement>(".card-wrapper");
+
+  if (!wrappers || wrappers.length === 0) {
+    const explodeBtn = document.createElement("button");
+    explodeBtn.textContent = "EXPLODE";
+    explodeBtn.className = "steal-player-btn";
+    explodeBtn.addEventListener("click", () => {
+      void fetch(`/api/games/${gameId}/explode`, { method: "GET" }).then(() => {
+        picker.remove();
+      });
+    });
+    picker.appendChild(explodeBtn);
+  } else {
+    wrappers.forEach((wrapper) => {
+      const cardType = wrapper.dataset.cardType as CardType;
+      const cardId = parseInt(wrapper.dataset.cardId ?? "0");
+      const clone = makeCardEl(cardType, cardId, false);
+      clone.addEventListener("click", () => void chooseCard(cardId, picker));
+      cardRow.appendChild(clone);
+    });
+    picker.appendChild(cardRow);
+  }
+
   document.body.appendChild(picker);
 }
 
@@ -375,6 +420,7 @@ const source = new EventSource(`/api/sse?gameId=${gameId}`);
 source.onopen = (): void => {
   void loadState();
 };
+
 source.onmessage = async (event: MessageEvent<string>): Promise<void> => {
   const data = JSON.parse(event.data) as { type: EventTypes; state?: GameState };
   if (data.type === EventTypes.game_state_updated && data.state) {
