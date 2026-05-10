@@ -243,7 +243,10 @@ router.post("/:id/draw", async (request, response) => {
   if (card.card_type == "EXPLODING_KITTEN")
     await Games.setPendingAction(gameId, "CARD", userId, "DEFUSE", userId);
   await Games.updateCardPositions(gameId);
-  await Games.advanceTurn(gameId);
+  //if turns left > greater than 1
+  if ((await Games.getTurnsLeft(gameId)) > 1) {
+    await Games.decrementTurnsLeft(gameId);
+  } else await Games.advanceTurn(gameId);
   await broadcastGameState(gameId, await Games.state(gameId));
   response.json({ card });
 });
