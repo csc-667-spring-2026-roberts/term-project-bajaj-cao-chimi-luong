@@ -113,7 +113,6 @@ function renderDeck(count: number): void {
   }
 }
 
- 
 async function renderState(state: GameState): Promise<void> {
   const meState = state.players.find((p) => p.user_id === state.whoami);
   const opponentState = state.players.find((p) => p.user_id !== state.whoami);
@@ -330,6 +329,8 @@ async function chooseCard(cardId: number, picker: HTMLElement): Promise<void> {
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ cardId }),
   });
+  renderedCards.delete(cardId);
+  myHand?.querySelector<HTMLElement>(`[data-card-id="${String(cardId)}"]`)?.remove();
   setStatusM("Card chosen!");
 }
 
