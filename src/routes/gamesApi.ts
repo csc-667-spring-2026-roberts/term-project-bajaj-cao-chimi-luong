@@ -271,6 +271,7 @@ router.post("/:id/choose_card", async (request, response) => {
 
   //Remove Pending Action
   await Games.resolvePendingAction(gameId);
+  await broadcastGameState(gameId, await Games.state(gameId));
   response.json({ ok: true });
 });
 
@@ -316,7 +317,7 @@ router.post("/:id/choose_opponent", async (request, response) => {
     await Games.setCurrentPlayer(gameId, userId);
     await Games.resolvePendingAction(gameId);
   }
-
+  await broadcastGameState(gameId, await Games.state(gameId));
   response.json({ ok: true });
 });
 
