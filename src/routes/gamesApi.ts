@@ -381,10 +381,6 @@ router.get("/:id/see_the_future", async (request, response) => {
 router.get("/:id/discardPile", async (request, response) => {
   const gameId = parseInt(request.params.id);
   const card = await Games.getTopDiscard(gameId);
-  if (!card) {
-    response.status(400).json({ error: "No card" });
-    return;
-  }
   response.json({ card });
 });
 router.get("/:id/acknowledge", async (request, response) => {

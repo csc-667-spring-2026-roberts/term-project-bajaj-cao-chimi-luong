@@ -308,14 +308,15 @@ function showCardPicker(): void {
 function showDefusePicker(): void {
   const picker = document.createElement("div");
   picker.id = "steal-picker";
-  picker.innerHTML = `<div class="steal-title">You pulled an exploding kitten! Pick a defuse to disarm the kitty</div>`;
+  picker.innerHTML = `<div class="steal-title">Choose a defuse</div>`;
 
   const cardRow = document.createElement("div");
   cardRow.className = "steal-card-row";
 
-  const wrappers = myHand?.querySelectorAll<HTMLElement>(".card-wrapper");
+  const wrappers = Array.from(myHand?.querySelectorAll<HTMLElement>(".card-wrapper") ?? []);
+  const defuseWrappers = wrappers.filter((w) => w.dataset.cardType === CardType.DEFUSE);
 
-  if (!wrappers || wrappers.length === 0) {
+  if (defuseWrappers.length === 0) {
     const explodeBtn = document.createElement("button");
     explodeBtn.textContent = "EXPLODE";
     explodeBtn.className = "steal-player-btn";
@@ -326,7 +327,7 @@ function showDefusePicker(): void {
     });
     picker.appendChild(explodeBtn);
   } else {
-    wrappers.forEach((wrapper) => {
+    defuseWrappers.forEach((wrapper) => {
       const cardType = wrapper.dataset.cardType as CardType;
       const cardId = parseInt(wrapper.dataset.cardId ?? "0");
       const clone = makeCardEl(cardType, cardId, false);
@@ -338,7 +339,6 @@ function showDefusePicker(): void {
 
   document.body.appendChild(picker);
 }
-
 async function showSeeTheFuture(): Promise<void> {
   const res = await fetch(`/api/games/${gameId}/see_the_future`);
   const { result: cards } = (await res.json()) as {
