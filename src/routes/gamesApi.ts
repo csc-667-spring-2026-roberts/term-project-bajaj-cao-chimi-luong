@@ -175,6 +175,9 @@ router.post("/:id/play", async (request, response) => {
   if (card_type == "SEE_THE_FUTURE") {
     await Games.setPendingAction(gameId, "SEE_THE_FUTURE", userId, "SEE_THE_FUTURE", userId);
   }
+  if (card_type == "SHUFFLE") {
+    //TODO
+  }
 
   await Games.playCard(gameId, cardId);
   await Games.updateCardPositions(gameId);
@@ -190,6 +193,7 @@ router.post("/:id/state", async (request) => {
 
 const broadcastGameState = async (gameId: number, players: GameUserState[]): Promise<void> => {
   const deck_count = await Games.deckCount(gameId);
+  const pendingAction = await Games.getPendingAction(gameId);
   players.forEach((value) => {
     SSE.broadcastToGameUser(gameId, value.user_id, {
       type: EventTypes.game_state_updated,
@@ -198,7 +202,7 @@ const broadcastGameState = async (gameId: number, players: GameUserState[]): Pro
         whoami: value.user_id,
         players,
         deck_count,
-        pending_action: Games.getPendingAction(gameId),
+        pending_action: pendingAction,
       },
     });
   });

@@ -31,7 +31,7 @@ const deckStack = document.querySelector<HTMLDivElement>("#draw-deck");
 const deckCountLabel = document.querySelector<HTMLDivElement>("#deck-count-label");
 const gameStatus = document.querySelector<HTMLDivElement>("#game-status");
 const gameId = gameIdInput?.value ?? "-1";
-
+let opponentUserId: number | null = null;
 function setStatus(message: string): void {
   if (gameStatus) gameStatus.textContent = message;
 }
@@ -102,7 +102,7 @@ function renderDeck(count: number): void {
 function renderState(state: GameState): void {
   const meState = state.players.find((p) => p.user_id === state.whoami);
   const opponentState = state.players.find((p) => p.user_id !== state.whoami);
-
+  if (opponentState) opponentUserId = opponentState.user_id;
   if (meState && meContainer) meContainer.replaceChildren(renderPlayer(meState));
   if (opponentState && opponentContainer)
     opponentContainer.replaceChildren(renderPlayer(opponentState));
@@ -215,17 +215,94 @@ async function loadState(): Promise<void> {
   renderState(state);
 }
 
+function showCardPicker(): void {
+  const picker = document.createElement("div");
+  picker.id = "steal-picker";
+  picker.innerHTML = `<div class="steal-title">Choose a card</div>`;
+
+  const cardRow = document.createElement("div");
+  cardRow.className = "steal-card-row";
+
+  myHand?.querySelectorAll<HTMLElement>(".card-wrapper").forEach((wrapper) => {
+    const cardType = wrapper.dataset.cardType as CardType;
+    const cardId = parseInt(wrapper.dataset.cardId ?? "0");
+    const clone = makeCardEl(cardType, cardId, false);
+    clone.addEventListener("click", () => void chooseCard(cardId, picker));
+    cardRow.appendChild(clone);
+  });
+
+  picker.appendChild(cardRow);
+  document.body.appendChild(picker);
+}
+
+async function chooseCard(cardId: number, picker: HTMLElement): Promise<void> {
+  picker.remove();
+  await fetch(`/api/games/${gameId}/choose_card`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ cardId }),
+  });
+  setStatus("Card chosen!");
+}
+
+async function chooseOpponent(opponentId: number): Promise<void> {
+  await fetch(`/api/games/${gameId}/choose_opponent`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ opponentId }),
+  });
+  setStatus("Waiting for opponent to give a card...");
+}
+
+function showOpponentPicker(): void {
+  const picker = document.createElement("div");
+  picker.id = "steal-picker";
+  picker.innerHTML = `<div class="steal-title">Choose a player to request a card from</div>`;
+
+  const playerRow = document.createElement("div");
+  playerRow.className = "steal-card-row";
+
+  const opponents = document.querySelectorAll<HTMLElement>("#opponent-info .player-state");
+  opponents.forEach((opponent) => {
+    const email = opponent.querySelector<HTMLElement>(".player-email")?.textContent ?? "Opponent";
+    const btn = document.createElement("button");
+    btn.className = "steal-player-btn";
+    btn.textContent = email;
+    btn.addEventListener("click", () => {
+      picker.remove();
+      void chooseOpponent(opponentUserId ?? 0);
+    });
+    playerRow.appendChild(btn);
+  });
+
+  picker.appendChild(playerRow);
+  document.body.appendChild(picker);
+}
+
 drawButton?.addEventListener("click", () => void drawCard());
 shuffleButton?.addEventListener("click", () => void shuffleDeck());
 
 const source = new EventSource(`/api/sse?gameId=${gameId}`);
 source.onopen = (): void => {
-  console.log("bhbu");
   void loadState();
 };
 source.onmessage = (event: MessageEvent<string>): void => {
   const data = JSON.parse(event.data) as { type: EventTypes; state?: GameState };
   if (data.type === EventTypes.game_state_updated && data.state) {
     renderState(data.state);
+    //check for pending action
+    const pendingAction = data.state.pending_action;
+    if (pendingAction) {
+      if (
+        pendingAction.choose_what == "CARD" &&
+        data.state.whoami == pendingAction.decision_needed_from
+      )
+        showCardPicker();
+      if (
+        pendingAction.choose_what == "OPPONENT" &&
+        data.state.whoami == pendingAction.decision_needed_from
+      )
+        showOpponentPicker();
+    }
   }
 };

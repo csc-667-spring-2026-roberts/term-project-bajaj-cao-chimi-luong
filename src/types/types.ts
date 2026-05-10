@@ -17,7 +17,7 @@ export interface User {
 }
 
 export interface DbUser extends User {
-  password_hash: string;
+  pw_hash: string;
 }
 
 export enum GameStatus {

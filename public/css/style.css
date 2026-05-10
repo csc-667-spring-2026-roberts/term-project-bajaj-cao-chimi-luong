@@ -43,8 +43,8 @@ body {
     font-family: 'Nunito', sans-serif;
     background: var(--bg);
     background-image:
-        radial-gradient(ellipse at 20% 20%, rgba(255, 80, 0, 0.12) 0%, transparent 60%),
-        radial-gradient(ellipse at 80% 80%, rgba(255, 60, 0, 0.08) 0%, transparent 60%);
+            radial-gradient(ellipse at 20% 20%, rgba(255, 80, 0, 0.12) 0%, transparent 60%),
+            radial-gradient(ellipse at 80% 80%, rgba(255, 60, 0, 0.08) 0%, transparent 60%);
     color: var(--text);
     min-height: 100vh;
     display: flex;
@@ -72,8 +72,8 @@ nav .logo {
     text-decoration: none;
     letter-spacing: 2px;
     text-shadow:
-        2px 2px 0 var(--accent2),
-        4px 4px 0 rgba(0, 0, 0, 0.4);
+            2px 2px 0 var(--accent2),
+            4px 4px 0 rgba(0, 0, 0, 0.4);
     transition: transform 0.2s;
 }
 
@@ -631,55 +631,55 @@ main>h2 {
 
 css/* ─── Game root ──────────────────────────────────────── */
 #game-root {
-  width: 100%;
-  height: calc(100vh - 60px);
-  position: relative;
+    width: 100%;
+    height: calc(100vh - 60px);
+    position: relative;
 }
 
 #opponent-area {
-  position: fixed;
-  top: 80px;
-  left: 50%;
-  transform: translateX(-50%);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.5rem;
-  z-index: 10;
+    position: fixed;
+    top: 80px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+    z-index: 10;
 }
 
 
 #my-area {
-  position: fixed;
-  bottom: 5rem;
-  left: 2.5rem;
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-  z-index: 10;
-  max-width: 50vw;
-  overflow: visible;
+    position: fixed;
+    bottom: 5rem;
+    left: 2.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    z-index: 10;
+    max-width: 50vw;
+    overflow: visible;
 }
 
 #my-info {
-  order: 2;
+    order: 2;
 }
 
 .player-label {
-  font-family: 'Bangers', cursive;
-  font-size: 1.2rem;
-  color: var(--accent);
-  letter-spacing: 1px;
-  order: 1;
+    font-family: 'Bangers', cursive;
+    font-size: 1.2rem;
+    color: var(--accent);
+    letter-spacing: 1px;
+    order: 1;
 }
 
 #my-hand {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  max-width: 45vw;
-  order: 3;
-  overflow: visible;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    max-width: 45vw;
+    order: 3;
+    overflow: visible;
 }
 
 
@@ -713,53 +713,53 @@ css/* ─── Game root ──────────────────
 }
 
 #center-zone {
-  position: fixed;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 4rem;
-  z-index: 10;
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4rem;
+    z-index: 10;
 }
 
 #game-status {
-  font-family: 'Bangers', cursive;
-  font-size: 1.4rem;
-  color: var(--yellow);
-  letter-spacing: 2px;
-  text-shadow: 2px 2px 0 var(--accent2);
-  text-align: center;
-  white-space: nowrap;
+    font-family: 'Bangers', cursive;
+    font-size: 1.4rem;
+    color: var(--yellow);
+    letter-spacing: 2px;
+    text-shadow: 2px 2px 0 var(--accent2);
+    text-align: center;
+    white-space: nowrap;
 }
 
 #discard-zone {
-  width: 90px;
-  height: 126px;
-  border-radius: 10px;
-  border: 2px dashed var(--border);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--muted);
-  font-size: 0.8rem;
-  font-family: 'Bangers', cursive;
-  letter-spacing: 1px;
-  overflow: visible;
-  position: relative;
+    width: 90px;
+    height: 126px;
+    border-radius: 10px;
+    border: 2px dashed var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--muted);
+    font-size: 0.8rem;
+    font-family: 'Bangers', cursive;
+    letter-spacing: 1px;
+    overflow: visible;
+    position: relative;
 }
 
 /* ─── Deck zone bottom right ─────────────────────────── */
 #deck-zone {
-  position: fixed;
-  bottom: 1.5rem;
-  right: 1.5rem;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 8px;
-  z-index: 10;
+    position: fixed;
+    bottom: 1.5rem;
+    right: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    z-index: 10;
 }
 
 .deck-stack {
@@ -787,77 +787,77 @@ css/* ─── Game root ──────────────────
 }
 
 #deck-count-label {
-  font-family: 'Bangers', cursive;
-  font-size: 1.4rem;
-  color: var(--yellow);
-  letter-spacing: 2px;
-  text-align: center;
-  text-shadow: 2px 2px 0 var(--accent2);
-  padding-top: 1rem;
+    font-family: 'Bangers', cursive;
+    font-size: 1.4rem;
+    color: var(--yellow);
+    letter-spacing: 2px;
+    text-align: center;
+    text-shadow: 2px 2px 0 var(--accent2);
+    padding-top: 1rem;
 }
 
 /* ─── Card face ──────────────────────────────────────── */
 .card-face {
-  width: 90px;
-  height: 126px;
-  border-radius: 10px;
-  border: 2px solid var(--border);
-  overflow: hidden;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
-  padding: 0;
-  position: relative;
+    width: 90px;
+    height: 126px;
+    border-radius: 10px;
+    border: 2px solid var(--border);
+    overflow: hidden;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    padding: 0;
+    position: relative;
 }
 
 .card-wrapper:hover .card-face {
-  transform: translateY(-12px) scale(2.6);
-  overflow: visible;
-  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.6);
+    transform: translateY(-12px) scale(2.6);
+    overflow: visible;
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.6);
 }
 
 .card-face .card-name {
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  background: rgba(0, 0, 0, 0.75);
-  color: #fff;
-  font-size: 9px;
-  font-weight: 700;
-  text-align: center;
-  padding: 3px 2px;
-  border-radius: 0 0 8px 8px;
-  opacity: 0;
-  transition: opacity 0.2s ease;
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: rgba(0, 0, 0, 0.75);
+    color: #fff;
+    font-size: 9px;
+    font-weight: 700;
+    text-align: center;
+    padding: 3px 2px;
+    border-radius: 0 0 8px 8px;
+    opacity: 0;
+    transition: opacity 0.2s ease;
 }
 
 .card-wrapper:hover .card-name {
-  opacity: 1;
+    opacity: 1;
 }
 
 .card-face:hover {
-  transform: translateY(-12px) scale(5.6);
-  z-index: 100;
-  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.6);
-  overflow: visible;
+    transform: translateY(-12px) scale(5.6);
+    z-index: 100;
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.6);
+    overflow: visible;
 }
 
 .card-wrapper {
-  width: 90px;
-  height: 126px;
-  position: relative;
-  z-index: 1;
-  cursor: pointer;
+    width: 90px;
+    height: 126px;
+    position: relative;
+    z-index: 1;
+    cursor: pointer;
 }
 
 .card-wrapper:hover {
-  z-index: 100;
+    z-index: 100;
 }
 
 .card-img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  border-radius: 8px;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 8px;
 }
 
 .card-icon {
@@ -873,69 +873,135 @@ css/* ─── Game root ──────────────────
 }
 
 @keyframes cardDeal {
-  0% {
-    transform: translateY(-60px) scale(0.8) rotateY(80deg);
-    opacity: 0;
-  }
-  70% {
-    transform: translateY(4px) scale(1.04) rotateY(0deg);
-    opacity: 1;
-  }
-  100% {
-    transform: translateY(0) scale(1);
-    opacity: 1;
-  }
+    0% {
+        transform: translateY(-60px) scale(0.8) rotateY(80deg);
+        opacity: 0;
+    }
+    70% {
+        transform: translateY(4px) scale(1.04) rotateY(0deg);
+        opacity: 1;
+    }
+    100% {
+        transform: translateY(0) scale(1);
+        opacity: 1;
+    }
 }
 
 .card-deal-anim {
-  animation: cardDeal 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
-  opacity: 0;
+    animation: cardDeal 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+    opacity: 0;
 }
 
 #draw-button, #shuffle-button {
-  padding: 0.6rem 1.2rem;
-  background: linear-gradient(135deg, var(--accent), var(--accent2));
-  color: #fff;
-  border: none;
-  border-radius: 8px;
-  font-family: 'Bangers', cursive;
-  font-size: 1rem;
-  letter-spacing: 2px;
-  cursor: pointer;
-  box-shadow: 0 4px 15px rgba(255, 60, 0, 0.4);
-  transition: transform 0.15s, box-shadow 0.15s;
+    padding: 0.6rem 1.2rem;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    font-family: 'Bangers', cursive;
+    font-size: 1rem;
+    letter-spacing: 2px;
+    cursor: pointer;
+    box-shadow: 0 4px 15px rgba(255, 60, 0, 0.4);
+    transition: transform 0.15s, box-shadow 0.15s;
 }
 
 #draw-button:hover:not(:disabled),
 #shuffle-button:hover:not(:disabled) {
-  transform: translateY(-2px) scale(1.02);
-  box-shadow: 0 6px 25px rgba(255, 60, 0, 0.55);
+    transform: translateY(-2px) scale(1.02);
+    box-shadow: 0 6px 25px rgba(255, 60, 0, 0.55);
 }
 
 #draw-button:disabled,
 #shuffle-button:disabled {
-  opacity: 0.4;
-  cursor: not-allowed;
-  background: var(--surface2);
-  box-shadow: none;
+    opacity: 0.4;
+    cursor: not-allowed;
+    background: var(--surface2);
+    box-shadow: none;
 }
 
 .card-wrapper.dragging {
-  opacity: 0.4;
-  transform: scale(0.95);
+    opacity: 0.4;
+    transform: scale(0.95);
 }
 
 #discard-zone.drag-over {
-  border-color: var(--accent);
-  background: rgba(255, 107, 0, 0.1);
-  box-shadow: 0 0 20px var(--accent-glow);
+    border-color: var(--accent);
+    background: rgba(255, 107, 0, 0.1);
+    box-shadow: 0 0 20px var(--accent-glow);
 }
 
 @keyframes cardPlay {
-  0% { transform: scale(1); opacity: 1; }
-  100% { transform: scale(0.5) translateY(-40px); opacity: 0; }
+    0% { transform: scale(1); opacity: 1; }
+    100% { transform: scale(0.5) translateY(-40px); opacity: 0; }
 }
 
 .card-play-anim {
-  animation: cardPlay 0.3s ease-out forwards;
+    animation: cardPlay 0.3s ease-out forwards;
+}
+
+#steal-picker {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: var(--surface);
+    border: 2px solid var(--accent);
+    border-radius: 16px;
+    padding: 2rem;
+    z-index: 200;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1.5rem;
+    box-shadow: 0 0 40px rgba(0,0,0,0.8);
+}
+
+.steal-title {
+    font-family: 'Bangers', cursive;
+    font-size: 1.4rem;
+    color: var(--yellow);
+    letter-spacing: 2px;
+}
+
+.steal-card-row {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+.steal-option {
+    cursor: pointer;
+    transition: transform 0.2s;
+}
+
+.steal-option:hover .card-face {
+    transform: translateY(-8px);
+}
+
+.card-back-face {
+    width: 90px;
+    height: 126px;
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+.steal-player-btn {
+    padding: 0.75rem 1.5rem;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    font-family: 'Bangers', cursive;
+    font-size: 1.2rem;
+    letter-spacing: 2px;
+    cursor: pointer;
+    box-shadow: 0 4px 15px rgba(255, 60, 0, 0.4);
+    transition: transform 0.15s, box-shadow 0.15s;
+}
+
+.steal-player-btn:hover {
+    transform: translateY(-2px) scale(1.02);
+    box-shadow: 0 6px 25px rgba(255, 60, 0, 0.55);
 }

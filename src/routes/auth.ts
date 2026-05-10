@@ -73,7 +73,7 @@ router.post("/login", async (request: TypedRequestBody<UserLoginRequestBody>, re
 
   try {
     const dbUser = await Users.findByEmail(email);
-    const isMatch = await bcrypt.compare(password, dbUser.password_hash);
+    const isMatch = await bcrypt.compare(password, dbUser.pw_hash);
 
     if (!isMatch) {
       throw new Error(`Match not found for ${email}`);
