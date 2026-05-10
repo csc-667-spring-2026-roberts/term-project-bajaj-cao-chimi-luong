@@ -315,4 +315,20 @@ router.post("/:id/choose_opponent", async (request, response) => {
 
   response.json({ ok: true });
 });
+
+router.get("/:id/see_the_future", async (request, response) => {
+  const gameId = parseInt(request.params.id);
+  const userId = request.session.user?.id;
+  if (!userId) {
+    response.status(401).json({ error: "Not authenticated" });
+    return;
+  }
+  if (await Games.validateActionResolution(gameId, userId)) {
+    const result = await Games.getTopThreeDeck(gameId);
+    response.json({ result });
+  } else {
+    response.status(401).json({ error: "Not validated" });
+    return;
+  }
+});
 export default router;

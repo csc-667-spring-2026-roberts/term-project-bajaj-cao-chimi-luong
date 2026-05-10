@@ -443,6 +443,18 @@ const getCurrentPlayer = async (gameId: number): Promise<number> => {
   );
   return result.user_id;
 };
+const getTopThreeDeck = async (
+  gameId: number,
+): Promise<{ card_id: number; card_type: string }[]> => {
+  return db.any<{ card_id: number; card_type: string }>(
+    `SELECT gc.card_id, c.card_type FROM game_cards gc
+     JOIN cards c ON c.id = gc.card_id
+     WHERE gc.game_id = $1 AND gc.location = 'deck'
+     ORDER BY gc.position ASC
+     LIMIT 3`,
+    [gameId],
+  );
+};
 
 export default {
   create,
@@ -479,4 +491,5 @@ export default {
   getMessageForActingUser,
   getUserEmail,
   getCurrentPlayer,
+  getTopThreeDeck,
 };
