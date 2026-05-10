@@ -32,7 +32,21 @@ const deckCountLabel = document.querySelector<HTMLDivElement>("#deck-count-label
 const gameStatus = document.querySelector<HTMLDivElement>("#game-status");
 const gameId = gameIdInput?.value ?? "-1";
 let opponentUserId: number | null = null;
-function setStatus(message: string): void {
+
+async function fetchMessage(): Promise<string> {
+  const res = await fetch(`/api/games/${gameId}/message`, {
+    method: "GET",
+  });
+  const { message } = (await res.json()) as { message: string };
+  return message;
+}
+
+async function setStatus(): Promise<void> {
+  const message = await fetchMessage();
+  if (gameStatus) gameStatus.textContent = message;
+}
+
+function setStatusM(message: string): void {
   if (gameStatus) gameStatus.textContent = message;
 }
 
@@ -99,18 +113,14 @@ function renderDeck(count: number): void {
   }
 }
 
-function renderState(state: GameState): void {
+async function renderState(state: GameState): Promise<void> {
   const meState = state.players.find((p) => p.user_id === state.whoami);
   const opponentState = state.players.find((p) => p.user_id !== state.whoami);
   if (opponentState) opponentUserId = opponentState.user_id;
   if (meState && meContainer) meContainer.replaceChildren(renderPlayer(meState));
   if (opponentState && opponentContainer)
     opponentContainer.replaceChildren(renderPlayer(opponentState));
-  if (!opponentState) {
-    setStatus("Waiting for opponent...");
-  } else {
-    setStatus(`${opponentState.email}'s turn`);
-  }
+  await setStatus();
 
   renderDeck(state.deck_count);
   void renderHand(gameId, state.whoami);
@@ -150,7 +160,7 @@ async function renderHand(gameId: string, _userId: number): Promise<void> {
   cards.forEach((card) => {
     if (renderedCards.has(card.id)) return;
     renderedCards.add(card.id);
-    setStatus("Dealing Cards...");
+    //setStatusM("Dealing Cards...");
     const el = makeCardEl(card.type, card.id, false);
     el.style.opacity = "0";
     el.style.animationDelay = `${String(newCardIndex * 0.1)}s`;
@@ -162,7 +172,7 @@ async function renderHand(gameId: string, _userId: number): Promise<void> {
   if (newCardIndex > 0) {
     setTimeout(
       () => {
-        setStatus("Your turn");
+        //setStatus("Your turn");
       },
       newCardIndex * 100 + 400,
     );
@@ -216,14 +226,14 @@ async function playCard(type: CardType): Promise<void> {
 async function shuffleDeck(): Promise<void> {
   if (shuffleButton) shuffleButton.disabled = true;
   await fetch(`/api/games/${gameId}/shuffle`, { method: "POST" });
-  setStatus("Shuffling Cards...");
+  setStatusM("Shuffling Cards...");
   if (shuffleButton) shuffleButton.disabled = false;
 }
 
 async function loadState(): Promise<void> {
   const res = await fetch(`/api/games/${gameId}/state`);
   const { state } = (await res.json()) as { state: GameState };
-  renderState(state);
+  await renderState(state);
 }
 
 function showCardPicker(): void {
@@ -253,7 +263,7 @@ async function chooseCard(cardId: number, picker: HTMLElement): Promise<void> {
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ cardId }),
   });
-  setStatus("Card chosen!");
+  setStatusM("Card chosen!");
 }
 
 async function chooseOpponent(opponentId: number): Promise<void> {
@@ -262,7 +272,7 @@ async function chooseOpponent(opponentId: number): Promise<void> {
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ opponentId }),
   });
-  setStatus("Waiting for opponent to give a card...");
+  setStatusM("Waiting for opponent to give a card...");
 }
 
 function showOpponentPicker(): void {
@@ -297,10 +307,9 @@ const source = new EventSource(`/api/sse?gameId=${gameId}`);
 source.onopen = (): void => {
   void loadState();
 };
-source.onmessage = (event: MessageEvent<string>): void => {
+source.onmessage = async (event: MessageEvent<string>): Promise<void> => {
   const data = JSON.parse(event.data) as { type: EventTypes; state?: GameState };
   if (data.type === EventTypes.game_state_updated && data.state) {
-    renderState(data.state);
-    //check for pending action
+    await renderState(data.state);
   }
 };
