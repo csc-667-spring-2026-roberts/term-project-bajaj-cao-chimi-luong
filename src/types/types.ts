@@ -69,6 +69,7 @@ export enum CardType {
   SEE_THE_FUTURE = "SEE_THE_FUTURE",
   NOPE = "NOPE",
   FAVOR = "FAVOR",
+  ATTACK = "ATTACK",
 }
 
 export interface PendingAction {
