@@ -146,6 +146,18 @@ router.post("/:id/play", async (request, response) => {
   //parse the request: game id
   const gameId = parseInt(request.params.id);
   const { cardId } = request.body as { cardId: number };
+  const card_type = await Games.getCardType(cardId);
+
+  if (await Games.validateActionResolution(gameId, userId)) {
+    if (card_type == "NOPE") {
+      await Games.resolvePendingAction(gameId);
+      await Games.playCard(gameId, cardId);
+      await Games.updateCardPositions(gameId);
+      await broadcastGameState(gameId, await Games.state(gameId));
+      response.json({ ok: true });
+      return;
+    }
+  }
 
   if (!(await Games.validateTurn(gameId, userId))) {
     response.status(402).json({ error: "Not your turn" });
@@ -155,8 +167,6 @@ router.post("/:id/play", async (request, response) => {
     response.status(402).json({ error: "Not a card in hand" });
     return;
   }
-
-  const card_type = await Games.getCardType(cardId);
 
   //SKIP
   if (card_type == "SKIP") {
@@ -177,7 +187,7 @@ router.post("/:id/play", async (request, response) => {
     await Games.setPendingAction(gameId, "SEE_THE_FUTURE", userId, "SEE_THE_FUTURE", userId);
   }
   if (card_type == "SHUFFLE") {
-    //TODO
+    await Games.shuffleDeck(gameId);
   }
 
   await Games.playCard(gameId, cardId);
@@ -302,8 +312,15 @@ router.post("/:id/choose_opponent", async (request, response) => {
     response.status(401).json({ error: "Not a valid pending action" });
     return;
   }
+
   //FAVOR
   if (pendingAction.initiating_reason == "FAVOR") {
+    if ((await Games.getHandCount(gameId, opponentId)) == 0) {
+      await Games.resolvePendingAction(gameId);
+      await broadcastGameState(gameId, await Games.state(gameId));
+      response.json({ ok: true });
+      return;
+    }
     await Games.setPendingAction(
       gameId,
       "CARD",
@@ -321,7 +338,6 @@ router.post("/:id/choose_opponent", async (request, response) => {
   await broadcastGameState(gameId, await Games.state(gameId));
   response.json({ ok: true });
 });
-
 router.get("/:id/see_the_future", async (request, response) => {
   const gameId = parseInt(request.params.id);
   const userId = request.session.user?.id;
@@ -337,4 +353,29 @@ router.get("/:id/see_the_future", async (request, response) => {
     return;
   }
 });
+router.get("/:id/discardPile", async (request, response) => {
+  const gameId = parseInt(request.params.id);
+  const card = await Games.getTopDiscard(gameId);
+  if (!card) {
+    response.status(400).json({ error: "No card" });
+    return;
+  }
+  response.json({ card });
+});
+router.get("/:id/acknowledge", async (request, response) => {
+  const gameId = parseInt(request.params.id);
+  const userId = request.session.user?.id;
+  if (!userId) {
+    response.status(401).json({ error: "Not authenticated" });
+    return;
+  }
+  if (!(await Games.validateActionResolution(gameId, userId))) {
+    response.status(401).json({ error: "Not yours to acknowledge" });
+    return;
+  }
+  await Games.resolvePendingAction(gameId);
+  await broadcastGameState(gameId, await Games.state(gameId));
+  response.json({ ok: true });
+});
+
 export default router;

@@ -1,15 +1,15 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title><%= typeof title !== "undefined" ? title : "Exploding Kittens" %></title>
-  <link rel="stylesheet" href="/css/style.css?v=<%= Date.now() %>">
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title><%= typeof title !== "undefined" ? title : "Exploding Kittens" %></title>
+    <link rel="stylesheet" href="/css/style.css?v=<%= Date.now() %>">
 </head>
 <body>
-  <%- include("partials/nav") %>
-    <main>
-                <%- body %>
-    </main>
+<%- include("partials/nav") %>
+<main>
+    <%- body %>
+</main>
 </body>
 </html>

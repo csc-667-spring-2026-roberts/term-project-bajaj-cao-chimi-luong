@@ -1,32 +1,32 @@
 <% const title = "Lobby" %>
 <%- include('layout', { title, body: `
-  <script src="/js/lobby.js" defer></script>
-  <div class="lobby-card">
-    <img class="avatar" src="${user.gravatar_url}" alt="Avatar" />
-    <h1>Welcome back!</h1>
-    <p class="email">${user.email}</p>
-    <p class="joined">Member since ${new Date(user.created_at).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
-    <hr class="divider" />
-  </div>
-  <h2>Lobby</h2>
-  <section>
-    <h3>Games</h3>
-    <form id="create-game" method="post" action="/games">
-                        <button type="submit">Create game</button>
-                    </form>
-    <div id="games-list">
-      <p>Loading...</p>
-    </div>
-    <template id="game-card-template">
-      <div class="game-card">
-        <span data-game-id></span>
-        <span data-creator></span>
-        <span data-player-count></span>
-        <span data-status></span>
-        <form method="post">
-          <button>Join</button>
-        </form>
-      </div>
-    </template>
-  </section>
+<script src="/js/lobby.js" defer></script>
+<div class="lobby-card">
+<img class="avatar" src="${user.gravatar_url}" alt="Avatar" />
+<h1>Welcome back!</h1>
+<p class="email">${user.email}</p>
+<p class="joined">Member since ${new Date(user.created_at).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
+<hr class="divider" />
+</div>
+<h2>Lobby</h2>
+<section>
+<h3>Games</h3>
+<form id="create-game" method="post" action="/games">
+<button type="submit">Create game</button>
+</form>
+<div id="games-list">
+<p>Loading...</p>
+</div>
+<template id="game-card-template">
+<div class="game-card">
+<span data-game-id></span>
+<span data-creator></span>
+<span data-player-count></span>
+<span data-status></span>
+<form method="post">
+<button>Join</button>
+</form>
+</div>
+</template>
+</section>
 `, user }) %>

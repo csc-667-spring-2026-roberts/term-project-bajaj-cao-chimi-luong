@@ -33,7 +33,7 @@
   }
   async function createGame() {
     const response = await fetch("/api/games", {
-      method: "post"
+      method: "post",
     });
     if (!response.ok) {
       console.error("Failed to create game");

@@ -25,7 +25,7 @@ const opponentContainer = document.querySelector<HTMLDivElement>("#opponent-info
 const meContainer = document.querySelector<HTMLDivElement>("#my-info");
 const myHand = document.querySelector<HTMLDivElement>("#my-hand");
 const drawButton = document.querySelector<HTMLButtonElement>("#draw-button");
-const shuffleButton = document.querySelector<HTMLButtonElement>("#shuffle-button");
+//const shuffleButton = document.querySelector<HTMLButtonElement>("#shuffle-button");
 const gameIdInput = document.querySelector<HTMLInputElement>("#GAME_ID");
 const deckStack = document.querySelector<HTMLDivElement>("#draw-deck");
 const deckCountLabel = document.querySelector<HTMLDivElement>("#deck-count-label");
@@ -113,6 +113,7 @@ function renderDeck(count: number): void {
   }
 }
 
+ 
 async function renderState(state: GameState): Promise<void> {
   const meState = state.players.find((p) => p.user_id === state.whoami);
   const opponentState = state.players.find((p) => p.user_id !== state.whoami);
@@ -124,12 +125,13 @@ async function renderState(state: GameState): Promise<void> {
 
   renderDeck(state.deck_count);
   void renderHand(gameId, state.whoami);
+  void renderDiscard();
 
   if (drawButton) drawButton.disabled = !opponentState || state.deck_count === 0;
-  if (shuffleButton) shuffleButton.disabled = true;
-
+  //if (shuffleButton) shuffleButton.disabled = true;
   const pendingAction = state.pending_action;
   if (pendingAction) {
+    console.log(pendingAction.choose_what);
     if (pendingAction.choose_what == "CARD" && state.whoami == pendingAction.decision_needed_from)
       showCardPicker();
     if (
@@ -137,6 +139,11 @@ async function renderState(state: GameState): Promise<void> {
       state.whoami == pendingAction.decision_needed_from
     )
       showOpponentPicker();
+    if (
+      pendingAction.choose_what == "SEE_THE_FUTURE" &&
+      state.whoami == pendingAction.decision_needed_from
+    )
+      await showSeeTheFuture();
   }
 }
 
@@ -160,7 +167,6 @@ async function renderHand(gameId: string, _userId: number): Promise<void> {
   cards.forEach((card) => {
     if (renderedCards.has(card.id)) return;
     renderedCards.add(card.id);
-    //setStatusM("Dealing Cards...");
     const el = makeCardEl(card.type, card.id, false);
     el.style.opacity = "0";
     el.style.animationDelay = `${String(newCardIndex * 0.1)}s`;
@@ -215,25 +221,25 @@ async function playCard(type: CardType): Promise<void> {
   card?.classList.add("card-play-anim");
   setTimeout(() => card?.remove(), 300);
 
-  if (discardZone) {
-    discardZone.innerHTML = "";
-    const discardEl = makeCardEl(type, 0, false);
-    discardEl.draggable = false;
-    discardZone.appendChild(discardEl);
-  }
-}
-
-async function shuffleDeck(): Promise<void> {
-  if (shuffleButton) shuffleButton.disabled = true;
-  await fetch(`/api/games/${gameId}/shuffle`, { method: "POST" });
-  setStatusM("Shuffling Cards...");
-  if (shuffleButton) shuffleButton.disabled = false;
+  void renderDiscard();
 }
 
 async function loadState(): Promise<void> {
   const res = await fetch(`/api/games/${gameId}/state`);
   const { state } = (await res.json()) as { state: GameState };
   await renderState(state);
+}
+
+async function renderDiscard(): Promise<void> {
+  const res = await fetch(`/api/games/${gameId}/discardPile`);
+  const { card } = (await res.json()) as { card: { card_type: CardType } | null };
+  if (!discardZone) return;
+  discardZone.innerHTML = "";
+  if (card) {
+    const el = makeCardEl(card.card_type, 0, false);
+    el.draggable = false;
+    discardZone.appendChild(el);
+  }
 }
 
 function showCardPicker(): void {
@@ -248,11 +254,72 @@ function showCardPicker(): void {
     const cardType = wrapper.dataset.cardType as CardType;
     const cardId = parseInt(wrapper.dataset.cardId ?? "0");
     const clone = makeCardEl(cardType, cardId, false);
-    clone.addEventListener("click", () => void chooseCard(cardId, picker));
+
+    if (cardType === CardType.NOPE) {
+      const btnContainer = document.createElement("div");
+      btnContainer.className = "card-hover-btns";
+      btnContainer.style.display = "none";
+
+      const nopeBtn = document.createElement("button");
+      nopeBtn.textContent = "NOPE";
+      nopeBtn.addEventListener("click", () => {
+        void playCard(CardType.NOPE).then(() => {
+          picker.remove();
+        });
+      });
+      const chooseBtn = document.createElement("button");
+      chooseBtn.textContent = "CHOOSE";
+      chooseBtn.addEventListener("click", () => void chooseCard(cardId, picker));
+
+      btnContainer.appendChild(nopeBtn);
+      btnContainer.appendChild(chooseBtn);
+      clone.appendChild(btnContainer);
+
+      clone.addEventListener("mouseenter", () => {
+        btnContainer.style.display = "flex";
+      });
+      clone.addEventListener("mouseleave", () => {
+        btnContainer.style.display = "none";
+      });
+    } else {
+      clone.addEventListener("click", () => void chooseCard(cardId, picker));
+    }
+
     cardRow.appendChild(clone);
   });
 
   picker.appendChild(cardRow);
+  document.body.appendChild(picker);
+}
+
+async function showSeeTheFuture(): Promise<void> {
+  const res = await fetch(`/api/games/${gameId}/see_the_future`);
+  const { result: cards } = (await res.json()) as {
+    result: { card_id: number; card_type: CardType }[];
+  };
+  const picker = document.createElement("div");
+  picker.id = "steal-picker";
+  picker.innerHTML = `<div class="steal-title">Top 3 cards of the deck</div>`;
+
+  const cardRow = document.createElement("div");
+  cardRow.className = "steal-card-row";
+
+  cards.forEach((card) => {
+    const el = makeCardEl(card.card_type, card.card_id, false);
+    el.draggable = false;
+    cardRow.appendChild(el);
+  });
+
+  const doneButton = document.createElement("button");
+  doneButton.textContent = "Done";
+  doneButton.addEventListener("click", () => {
+    void fetch(`/api/games/${gameId}/acknowledge`, { method: "GET" }).then(() => {
+      picker.remove();
+    });
+  });
+
+  picker.appendChild(cardRow);
+  picker.appendChild(doneButton);
   document.body.appendChild(picker);
 }
 
@@ -272,7 +339,7 @@ async function chooseOpponent(opponentId: number): Promise<void> {
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ opponentId }),
   });
-  setStatusM("Waiting for opponent to give a card...");
+  //setStatusM("Waiting for opponent to give a card...");
 }
 
 function showOpponentPicker(): void {
@@ -301,7 +368,7 @@ function showOpponentPicker(): void {
 }
 
 drawButton?.addEventListener("click", () => void drawCard());
-shuffleButton?.addEventListener("click", () => void shuffleDeck());
+//shuffleButton?.addEventListener("click", () => void shuffleDeck());
 
 const source = new EventSource(`/api/sse?gameId=${gameId}`);
 source.onopen = (): void => {

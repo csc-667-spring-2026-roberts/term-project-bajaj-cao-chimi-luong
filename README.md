@@ -4,8 +4,8 @@ CSC 667 Term Project — Spring 2026
 
 ## Team Members
 
-| Name | GitHub | Email |
-|------|--------|-------|
+| Name         | GitHub       | Email            |
+|--------------|--------------|------------------|
 | Kevin Luong  | @frfkevin    | kluong4@sfsu.edu |
 | Abhay Bajaj  | @Abhay-Bajaj | abajaj@sfsu.edu  |
 | Haibin Cao   | @haibinc     | hcao@sfsu.edu    |

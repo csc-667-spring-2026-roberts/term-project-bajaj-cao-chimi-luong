@@ -1,37 +1,37 @@
 <% const title = "Sign In" %>
 <%- include('../layout', { title, body: `
-  <div class="card">
-    <h1>Welcome back</h1>
-    <p class="subtitle">Sign in to continue.</p>
-    ${typeof error !== "undefined" && error ? '<div class="error-box">' + error + '</div>' : ''}
-    <form method="POST" action="/auth/login">
-      <div class="form-group">
-        <label for="email">Email</label>
-        <input
-          type="email"
-          id="email"
-          name="email"
-          placeholder="you@example.com"
-          required
-          autocomplete="email"
-        />
-      </div>
-      <div class="form-group">
-        <label for="password">Password</label>
-        <input
-          type="password"
-          id="password"
-          name="password"
-          placeholder="Your password"
-          required
-          autocomplete="current-password"
-        />
-      </div>
-      <button class="btn" type="submit">Sign in</button>
-    </form>
-    <div class="link-row">
-      Don&#39;t have an account? <a href="/auth/register">Register</a>
-    </div>
-  </div>
+<div class="card">
+<h1>Welcome back</h1>
+<p class="subtitle">Sign in to continue.</p>
+${typeof error !== "undefined" && error ? '<div class="error-box">' + error + '</div>' : ''}
+<form method="POST" action="/auth/login">
+<div class="form-group">
+<label for="email">Email</label>
+<input
+type="email"
+id="email"
+name="email"
+placeholder="you@example.com"
+required
+autocomplete="email"
+/>
+</div>
+<div class="form-group">
+<label for="password">Password</label>
+<input
+type="password"
+id="password"
+name="password"
+placeholder="Your password"
+required
+autocomplete="current-password"
+/>
+</div>
+<button class="btn" type="submit">Sign in</button>
+</form>
+<div class="link-row">
+Don&#39;t have an account? <a href="/auth/register">Register</a>
+</div>
+</div>
 ` }) %>
 

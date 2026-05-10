@@ -42,9 +42,8 @@ body::before {
 body {
     font-family: 'Nunito', sans-serif;
     background: var(--bg);
-    background-image:
-            radial-gradient(ellipse at 20% 20%, rgba(255, 80, 0, 0.12) 0%, transparent 60%),
-            radial-gradient(ellipse at 80% 80%, rgba(255, 60, 0, 0.08) 0%, transparent 60%);
+    background-image: radial-gradient(ellipse at 20% 20%, rgba(255, 80, 0, 0.12) 0%, transparent 60%),
+    radial-gradient(ellipse at 80% 80%, rgba(255, 60, 0, 0.08) 0%, transparent 60%);
     color: var(--text);
     min-height: 100vh;
     display: flex;
@@ -71,9 +70,8 @@ nav .logo {
     color: var(--yellow);
     text-decoration: none;
     letter-spacing: 2px;
-    text-shadow:
-            2px 2px 0 var(--accent2),
-            4px 4px 0 rgba(0, 0, 0, 0.4);
+    text-shadow: 2px 2px 0 var(--accent2),
+    4px 4px 0 rgba(0, 0, 0, 0.4);
     transition: transform 0.2s;
 }
 
@@ -404,7 +402,7 @@ main:has(.lobby-card) {
     gap: 2rem;
 }
 
-main>h2 {
+main > h2 {
     font-family: 'Bangers', cursive;
     font-size: 2rem;
     color: var(--yellow);
@@ -412,12 +410,12 @@ main>h2 {
     text-shadow: 2px 2px 0 var(--accent2);
 }
 
-main>section {
+main > section {
     width: 100%;
     max-width: 600px;
 }
 
-main>section h3 {
+main > section h3 {
     font-family: 'Bangers', cursive;
     font-size: 1.4rem;
     color: var(--accent);
@@ -520,7 +518,7 @@ main:has(#battlefield) {
     gap: 1.5rem;
 }
 
-main>h2 {
+main > h2 {
     font-family: 'Bangers', cursive;
     font-size: 2rem;
     color: var(--yellow);
@@ -629,7 +627,7 @@ main>h2 {
     font-size: 1.1rem;
 }
 
-css/* ─── Game root ──────────────────────────────────────── */
+css /* ─── Game root ──────────────────────────────────────── */
 #game-root {
     width: 100%;
     height: calc(100vh - 60px);
@@ -932,8 +930,14 @@ css/* ─── Game root ──────────────────
 }
 
 @keyframes cardPlay {
-    0% { transform: scale(1); opacity: 1; }
-    100% { transform: scale(0.5) translateY(-40px); opacity: 0; }
+    0% {
+        transform: scale(1);
+        opacity: 1;
+    }
+    100% {
+        transform: scale(0.5) translateY(-40px);
+        opacity: 0;
+    }
 }
 
 .card-play-anim {
@@ -954,7 +958,7 @@ css/* ─── Game root ──────────────────
     flex-direction: column;
     align-items: center;
     gap: 1.5rem;
-    box-shadow: 0 0 40px rgba(0,0,0,0.8);
+    box-shadow: 0 0 40px rgba(0, 0, 0, 0.8);
 }
 
 .steal-title {
@@ -1004,4 +1008,33 @@ css/* ─── Game root ──────────────────
 .steal-player-btn:hover {
     transform: translateY(-2px) scale(1.02);
     box-shadow: 0 6px 25px rgba(255, 60, 0, 0.55);
+}
+
+.card-hover-btns {
+    position: absolute;
+    bottom: -55px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    z-index: 201;
+    white-space: nowrap;
+}
+
+.card-hover-btns button {
+    padding: 0.25rem 0.6rem;
+    font-family: 'Bangers', cursive;
+    font-size: 0.8rem;
+    letter-spacing: 1px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    color: #fff;
+    box-shadow: 0 2px 8px rgba(255, 60, 0, 0.4);
+}
+
+.card-hover-btns button:hover {
+    transform: scale(1.05);
 }

@@ -278,20 +278,6 @@ const giveCardTo = async (gameId: number, cardId: number, userId: number): Promi
   ]);
 };
 
-const shuffleDeck = async (gameId: number): Promise<void> => {
-  await db.none(
-    `UPDATE game_cards
-     SET position = sub.new_pos
-       FROM (
-       SELECT card_id, ROW_NUMBER() OVER (ORDER BY random()) AS new_pos
-       FROM game_cards
-       WHERE game_id = $1 AND location = 'deck'
-       ) sub
-     WHERE game_cards.game_id = $1 AND game_cards.card_id = sub.card_id`,
-    [gameId],
-  );
-};
-
 const deckCount = async (gameId: number): Promise<number> => {
   const result = await db.one<{ count: number }>(
     `SELECT COUNT(*)::int AS count FROM game_cards
@@ -313,7 +299,8 @@ const getHand = async (gameId: number, userId: number): Promise<{ type: string; 
 
 const playCard = async (gameId: number, cardId: number): Promise<void> => {
   await db.none(
-    `UPDATE game_cards SET location = 'discard', user_id = NULL
+    `UPDATE game_cards SET location = 'discard', user_id = NULL,
+                           position = (SELECT COALESCE(MAX(position), 0) + 1 FROM game_cards WHERE game_id = $1 AND location = 'discard')
      WHERE game_id = $1 AND card_id = $2 AND location = 'hand'`,
     [gameId, cardId],
   );
@@ -456,6 +443,41 @@ const getTopThreeDeck = async (
   );
 };
 
+const shuffleDeck = async (gameId: number): Promise<void> => {
+  await db.none(
+    `UPDATE game_cards SET position = sub.new_pos
+     FROM (
+       SELECT card_id, ROW_NUMBER() OVER (ORDER BY random()) - 1 AS new_pos
+       FROM game_cards
+       WHERE game_id = $1 AND location = 'deck'
+     ) sub
+     WHERE game_cards.game_id = $1 AND game_cards.card_id = sub.card_id`,
+    [gameId],
+  );
+};
+
+const getTopDiscard = async (
+  gameId: number,
+): Promise<{ card_id: number; card_type: string } | null> => {
+  return db.oneOrNone<{ card_id: number; card_type: string }>(
+    `SELECT gc.card_id, c.card_type FROM game_cards gc
+     JOIN cards c ON c.id = gc.card_id
+     WHERE gc.game_id = $1 AND gc.location = 'discard'
+     ORDER BY gc.position DESC
+     LIMIT 1`,
+    [gameId],
+  );
+};
+
+const getHandCount = async (gameId: number, userId: number): Promise<number> => {
+  const result = await db.one<{ count: number }>(
+    `SELECT COUNT(*)::int AS count FROM game_cards
+     WHERE game_id = $1 AND user_id = $2 AND location = 'hand'`,
+    [gameId, userId],
+  );
+  return result.count;
+};
+
 export default {
   create,
   list,
@@ -492,4 +514,6 @@ export default {
   getUserEmail,
   getCurrentPlayer,
   getTopThreeDeck,
+  getTopDiscard,
+  getHandCount,
 };
