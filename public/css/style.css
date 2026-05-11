@@ -1104,3 +1104,37 @@ css /* ─── Game root ─────────────────�
   #chat-send:hover {
     background: var(--accent2);
   }
+
+  #emoji-picker {
+    position: absolute;
+    bottom: 50px;
+    right: 20px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 8px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    width: 180px;
+    z-index: 200;
+  }
+  
+  .emoji-opt {
+    font-size: 1.2rem;
+    cursor: pointer;
+    padding: 2px;
+    border-radius: 4px;
+  }
+  
+  .emoji-opt:hover {
+    background: var(--surface);
+  }
+  
+  #emoji-btn {
+    padding: 8px;
+    background: var(--surface2);
+    border: none;
+    cursor: pointer;
+    font-size: 1rem;
+  }

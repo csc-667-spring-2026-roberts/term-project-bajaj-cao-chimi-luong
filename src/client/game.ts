@@ -466,3 +466,19 @@ source.onmessage = async (event: MessageEvent<string>): Promise<void> => {
     addChatMessage(data.chat.email, data.chat.message);
   }
 };
+
+const emojiBtn = document.querySelector<HTMLButtonElement>("#emoji-btn");
+const emojiPicker = document.querySelector<HTMLDivElement>("#emoji-picker");
+
+emojiBtn?.addEventListener("click", () => {
+  if (emojiPicker)
+    emojiPicker.style.display = emojiPicker.style.display === "none" ? "flex" : "none";
+});
+
+document.querySelectorAll<HTMLSpanElement>(".emoji-opt").forEach((emoji) => {
+  emoji.addEventListener("click", () => {
+    if (chatInput) chatInput.value += emoji.textContent;
+    if (emojiPicker) emojiPicker.style.display = "none";
+    chatInput?.focus();
+  });
+});
