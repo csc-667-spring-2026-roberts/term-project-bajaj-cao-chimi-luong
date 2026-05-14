@@ -1038,3 +1038,103 @@ css /* ─── Game root ─────────────────�
 .card-hover-btns button:hover {
     transform: scale(1.05);
 }
+
+/* ─── Chat Box ───────────────────────────────────────── */
+#chat-box {
+    position: fixed;
+    top: 70px;
+    right: 20px;
+    width: 280px;
+    background: var(--surface);
+    border: 2px solid var(--border);
+    border-radius: 12px;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    z-index: 100;
+    box-shadow: var(--card-shadow);
+  }
+  
+  #chat-messages {
+    height: 200px;
+    overflow-y: auto;
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  
+  .chat-message {
+    font-size: 0.8rem;
+    color: var(--text);
+    line-height: 1.4;
+    word-break: break-word;
+  }
+  
+  .chat-email {
+    color: var(--accent);
+    font-weight: 700;
+  }
+  
+  #chat-input-row {
+    display: flex;
+    border-top: 1px solid var(--border);
+  }
+  
+  #chat-input {
+    flex: 1;
+    padding: 8px 10px;
+    background: var(--bg);
+    border: none;
+    color: var(--text);
+    font-size: 0.8rem;
+    outline: none;
+  }
+  
+  #chat-send {
+    padding: 8px 12px;
+    background: var(--accent);
+    color: white;
+    border: none;
+    cursor: pointer;
+    font-weight: 700;
+    font-size: 0.8rem;
+  }
+  
+  #chat-send:hover {
+    background: var(--accent2);
+  }
+
+  #emoji-picker {
+    position: absolute;
+    bottom: 50px;
+    right: 20px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 8px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    width: 180px;
+    z-index: 200;
+  }
+  
+  .emoji-opt {
+    font-size: 1.2rem;
+    cursor: pointer;
+    padding: 2px;
+    border-radius: 4px;
+  }
+  
+  .emoji-opt:hover {
+    background: var(--surface);
+  }
+  
+  #emoji-btn {
+    padding: 8px;
+    background: var(--surface2);
+    border: none;
+    cursor: pointer;
+    font-size: 1rem;
+  }

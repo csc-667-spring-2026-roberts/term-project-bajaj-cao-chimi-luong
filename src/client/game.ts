@@ -424,9 +424,61 @@ source.onopen = (): void => {
   void loadState();
 };
 
+const chatMessages = document.querySelector<HTMLDivElement>("#chat-messages");
+const chatInput = document.querySelector<HTMLInputElement>("#chat-input");
+const chatSend = document.querySelector<HTMLButtonElement>("#chat-send");
+
+function addChatMessage(email: string, message: string): void {
+  if (!chatMessages) return;
+  const msg = document.createElement("div");
+  msg.className = "chat-message";
+  msg.innerHTML = `<span class="chat-email">${email}:</span> <span class="chat-text">${message}</span>`;
+  chatMessages.appendChild(msg);
+  chatMessages.scrollTop = chatMessages.scrollHeight;
+}
+
+async function sendChat(): Promise<void> {
+  const message = chatInput?.value.trim();
+  if (!message) return;
+  if (chatInput) chatInput.value = "";
+  await fetch(`/api/games/${gameId}/chat`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ message }),
+  });
+}
+
+chatSend?.addEventListener("click", () => void sendChat());
+chatInput?.addEventListener("keydown", (e) => {
+  if (e.key === "Enter") void sendChat();
+});
+
 source.onmessage = async (event: MessageEvent<string>): Promise<void> => {
-  const data = JSON.parse(event.data) as { type: EventTypes; state?: GameState };
+  const data = JSON.parse(event.data) as {
+    type: EventTypes;
+    state?: GameState;
+    chat?: { email: string; message: string };
+  };
   if (data.type === EventTypes.game_state_updated && data.state) {
     await renderState(data.state);
   }
+  if (data.type === EventTypes.chat_message && data.chat) {
+    addChatMessage(data.chat.email, data.chat.message);
+  }
 };
+
+const emojiBtn = document.querySelector<HTMLButtonElement>("#emoji-btn");
+const emojiPicker = document.querySelector<HTMLDivElement>("#emoji-picker");
+
+emojiBtn?.addEventListener("click", () => {
+  if (emojiPicker)
+    emojiPicker.style.display = emojiPicker.style.display === "none" ? "flex" : "none";
+});
+
+document.querySelectorAll<HTMLSpanElement>(".emoji-opt").forEach((emoji) => {
+  emoji.addEventListener("click", () => {
+    if (chatInput) chatInput.value += emoji.textContent;
+    if (emojiPicker) emojiPicker.style.display = "none";
+    chatInput?.focus();
+  });
+});

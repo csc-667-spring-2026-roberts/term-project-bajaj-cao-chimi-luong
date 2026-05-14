@@ -429,4 +429,28 @@ router.get("/:id/explode", async (request, response) => {
     response.status(401).json({ error: "Not a valid exploding" });
   }
 });
+
+router.post("/:id/chat", async (request, response) => {
+  const userId = request.session.user?.id;
+  if (!userId) {
+    response.status(401).json({ error: "Not authenticated" });
+    return;
+  }
+  const gameId = parseInt(request.params.id);
+  const { message } = request.body as { message: string };
+  if (!message || message.trim().length === 0) {
+    response.status(400).json({ error: "Message is empty" });
+    return;
+  }
+  const email = await Games.getUserEmail(userId);
+  const players = await Games.state(gameId);
+  players.forEach((player) => {
+    SSE.broadcastToGameUser(gameId, player.user_id, {
+      type: EventTypes.chat_message,
+      chat: { email, message: message.trim() },
+    });
+  });
+  response.json({ ok: true });
+});
+
 export default router;

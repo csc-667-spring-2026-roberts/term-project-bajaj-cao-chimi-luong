@@ -44,6 +44,7 @@ export enum EventTypes {
   games_updated = "games_updated",
   game_state_updated = "game_state_updated",
   pending_actions = "pending_actions",
+  chat_message = "chat_message",
 }
 
 export interface GameUserState extends Pick<User, "email" | "gravatar_url"> {
