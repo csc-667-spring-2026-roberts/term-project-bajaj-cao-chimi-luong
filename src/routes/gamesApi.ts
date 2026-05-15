@@ -67,6 +67,7 @@ router.get("/:id/state", async (request, response) => {
   const deckCount = await Games.deckCount(gameId);
   const pendingAction = await Games.getPendingAction(gameId);
   const current = await Games.getCurrentPlayer(gameId);
+  const gameInfo = await Games.getGameInfo(gameId);
   response.json({
     state: {
       id: gameId,
@@ -75,6 +76,8 @@ router.get("/:id/state", async (request, response) => {
       deck_count: deckCount,
       pending_action: pendingAction,
       current_user_id: current,
+      status: gameInfo.status,
+      winner_id: gameInfo.winner_id,
     },
   });
 });
@@ -208,6 +211,8 @@ const broadcastGameState = async (gameId: number, players: GameUserState[]): Pro
   const deck_count = await Games.deckCount(gameId);
   const pendingAction = await Games.getPendingAction(gameId);
   const current = await Games.getCurrentPlayer(gameId);
+  const gameInfo = await Games.getGameInfo(gameId);
+
   players.forEach((value) => {
     SSE.broadcastToGameUser(gameId, value.user_id, {
       type: EventTypes.game_state_updated,
@@ -218,6 +223,8 @@ const broadcastGameState = async (gameId: number, players: GameUserState[]): Pro
         deck_count,
         pending_action: pendingAction,
         current_user_id: current,
+        status: gameInfo.status,
+        winner_id: gameInfo.winner_id,
       },
     });
   });
