@@ -519,6 +519,12 @@ const eliminatePlayer = async (gameId: number, userId: number): Promise<void> =>
   ]);
 };
 
+const getGameInfo = async (
+  gameId: number,
+): Promise<{ status: string; winner_id: number | null }> => {
+  return db.one("SELECT status, winner_id FROM games WHERE id = $1", [gameId]);
+};
+
 export default {
   eliminatePlayer,
   create,
@@ -561,4 +567,5 @@ export default {
   defuseExplodingKitten,
   onePlayerRemaining,
   setWinner,
+  getGameInfo,
 };

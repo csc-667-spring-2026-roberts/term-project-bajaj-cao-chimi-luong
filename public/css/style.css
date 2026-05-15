@@ -1138,3 +1138,48 @@ css /* ─── Game root ─────────────────�
     cursor: pointer;
     font-size: 1rem;
   }
+
+#result-banner {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: var(--surface);
+    border: 2px solid var(--accent);
+    border-radius: 16px;
+    padding: 2rem;
+    z-index: 200;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1.5rem;
+    box-shadow: 0 0 40px rgba(0, 0, 0, 0.8);
+    text-align: center;
+}
+
+#result-banner .result-headline {
+    font-family: 'Bangers', cursive;
+    font-size: 2.5rem;
+    letter-spacing: 3px;
+    color: var(--yellow);
+    text-shadow: 2px 2px 0 var(--accent2);
+}
+
+#result-banner .result-exit-btn {
+    padding: 0.75rem 1.5rem;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    font-family: 'Bangers', cursive;
+    font-size: 1.2rem;
+    letter-spacing: 2px;
+    cursor: pointer;
+    box-shadow: 0 4px 15px rgba(255, 60, 0, 0.4);
+    transition: transform 0.15s, box-shadow 0.15s;
+}
+
+#result-banner .result-exit-btn:hover {
+    transform: translateY(-2px) scale(1.02);
+    box-shadow: 0 6px 25px rgba(255, 60, 0, 0.55);
+}

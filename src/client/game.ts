@@ -1,4 +1,4 @@
-import { CardType, EventTypes, GameState, GameUserState } from "../types/types.js";
+import { CardType, EventTypes, GameState, GameUserState, GameStatus } from "../types/types.js";
 
 const CARD_META: Record<CardType, string> = {
   EXPLODING_KITTEN: "Exploding Kitten",
@@ -129,6 +129,10 @@ async function renderState(state: GameState): Promise<void> {
   await renderHand(gameId, state.whoami);
   void renderDiscard();
 
+  if (state.status === GameStatus.FINISHED) {
+    showResultBanner(state.winner_id === state.whoami);
+    return;
+  }
   if (drawButton) {
     drawButton.disabled = !(state.whoami == state.current_user_id && state.deck_count != 0);
   }
@@ -219,6 +223,17 @@ if (discardZone) {
   });
 }
 
+function showResultBanner(won: boolean): void {
+  if (document.getElementById("result-banner")) return;
+  const banner = document.createElement("div");
+  banner.id = "result-banner";
+  banner.innerHTML = `
+    <div class="result-headline">${won ? "🎉 You Win!" : "💥 You Lost!"}</div>
+    <button class="result-exit-btn" onclick="location.href='/lobby'">Exit to Lobby</button>
+  `;
+  document.body.appendChild(banner);
+}
+
 async function playCard(type: CardType): Promise<void> {
   const card = myHand?.querySelector<HTMLElement>(`[data-card-type="${type}"]`);
   const cardId = parseInt(card?.dataset.cardId ?? "0");
@@ -239,7 +254,9 @@ async function playCard(type: CardType): Promise<void> {
 
 async function loadState(): Promise<void> {
   const res = await fetch(`/api/games/${gameId}/state`);
-  const { state } = (await res.json()) as { state: GameState };
+  const { state } = (await res.json()) as {
+    state: GameState & { status?: string; winner_id?: number | null };
+  };
   await renderState(state);
 }
 
@@ -456,7 +473,7 @@ chatInput?.addEventListener("keydown", (e) => {
 source.onmessage = async (event: MessageEvent<string>): Promise<void> => {
   const data = JSON.parse(event.data) as {
     type: EventTypes;
-    state?: GameState;
+    state?: GameState & { status?: string; winner_id?: number | null };
     chat?: { email: string; message: string };
   };
   if (data.type === EventTypes.game_state_updated && data.state) {
